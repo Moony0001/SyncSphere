@@ -1,0 +1,5 @@
+Mapping the site:
+Dashboard:
+	Activity Feed:
+		1. Posts div with Post component inside it 
+		Left side panel displaying the profile of the user along with the followers, following, number of activities, latest 			activity, a link to 

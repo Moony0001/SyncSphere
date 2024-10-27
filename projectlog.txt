@@ -2,4 +2,12 @@ Mapping the site:
 Dashboard:
 	Activity Feed:
 		1. Posts div with Post component inside it 
-		Left side panel displaying the profile of the user along with the followers, following, number of activities, latest 			activity, a link to 
+		Left side panel displaying the profile of the user along with the followers, following, number of activities, latest activity, a 
+		link to 
+
+
+Adding Google OAuth: 
+
+First try: 
+Trying to take reference from the Angela Yu videos and projects to understand what to do and add. First we need to add the route to hit
+when a user opts for Google log in so, we add that route to the auth.routes.js.

@@ -9,7 +9,7 @@ dotenv.config();
 
 export const signup = async (req, res) => {
     try {
-        const {firstname, lastname, email,password} = req.body;
+        const {firstname, lastname, email, password, gender} = req.body;
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^/s@]+$/;
         if(!emailRegex.test(email)){
@@ -33,6 +33,7 @@ export const signup = async (req, res) => {
             firstname,
             lastname,
             email,
+            gender,
             password: hashedPassword
         })
 
@@ -45,6 +46,7 @@ export const signup = async (req, res) => {
                 firstname: newUser.firstname,
                 lastname: newUser.lastname,
                 email: newUser.email,
+                gender: newUser.gender,
                 followers: newUser.followers,
                 following: newUser.following,
                 profileImg: newUser.profileImg,

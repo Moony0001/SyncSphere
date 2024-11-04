@@ -1,5 +1,6 @@
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 
 import {v2 as cloudinary} from "cloudinary";
 
@@ -139,14 +140,22 @@ export const likePost = async (req, res) => {
             const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
             res.status(200).json(updatedLikes);
         }else{
+            if(post.user.toString() === userId.toString()){
+                return res.status(401).json({error: "You cannot like your own post"});
+            }
             post.likes.push(userId);
             await User.updateOne({_id: userId}, {$push: {likedPosts: postId}});
             await post.save();
 
             const notification = new Notification ({
-                from: userId,
                 to: post.user,
-                type: "like",
+                icon: userId.profileImg,
+                title: "New Kudos",
+                text: `${userId.firstname} ${userId.lastname} gave you Kudos on ${post.title}!`,
+                actionable_link: `/post/${postId}`,
+                display_date: new Date(),
+                read: false,
+                category: "kudos",
             })
 
             await notification.save();
@@ -183,9 +192,14 @@ export const commentOnPost = async (req, res) => {
         await post.save();
 
         const notification = new Notification({
-            from: userId,
             to: post.user,
-            type: "comment",
+            icon: userId.profileImg,
+            title: "New Comment",
+            text: `${userId.firstname} ${userId.lastname} commented on ${post.title}!`,
+            actionable_link: `/post/${post._id}`,
+            display_date: new Date(),
+            read: false,
+            category: "comment",
         })
 
         await notification.save();

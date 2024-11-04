@@ -49,9 +49,14 @@ export const followUser = async (req, res) => {
 
             //Send notification to the user
             const newNotification  = new Notification({
-                from: req.user._id,
-                to: userToModify._id,
-                type: "follow"
+                to: id,
+                icon: currentUser.profileImg,
+                title: "New Follower",
+                text: `${currentUser.firstname} ${currentUser.lastname} started following you! Follow them back!`,
+                actionable_link: `/profile/${currentUser._id}`,
+                display_date: new Date(),
+                category: "follow",
+                read: false
             })
             await newNotification.save();
             res.status.json({message: "User followed successfully"});

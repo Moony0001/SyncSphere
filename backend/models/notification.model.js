@@ -1,17 +1,32 @@
 import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema({
-    from: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
     to: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String,
         required: true
     },
-    type: {
+    icon: {
+        type: String,
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+    text: {
+        type: String,
+        required: true
+    },
+    actionable_link: {
+        type: String,
+        required: true,
+        enum: ["/profile/:id", "/post/:id"]
+    },
+    display_date: {
+        type: Date,
+        required: true
+    },
+    category: {
         type: String,
         required: true,
         enum: ["follow", "kudos", "comment"]

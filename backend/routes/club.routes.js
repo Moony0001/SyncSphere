@@ -1,6 +1,6 @@
 import express from "express";
-import { protectRoute } from "../middleware/protectRoute";
-import { createClub, deleteClub, editClub, getClubs, getMyClubs, inviteUser, joinClub, leaveClub, searchClubs } from "../controllers/club.controllers";
+import { protectRoute } from "../middleware/protectRoute.js";
+import { createClub, deleteClub, editClub, getClubs, getMyClubs, inviteUser, joinClub, leaveClub, searchClubs } from "../controllers/club.controllers.js";
 
 const router = express.Router();
 
@@ -13,3 +13,5 @@ router.post("/leave/:id", protectRoute, leaveClub);
 router.post("/invite/:userId/:clubId", protectRoute, inviteUser);
 router.post("/edit/:id", protectRoute, editClub);
 router.delete("/:id", protectRoute, deleteClub);
+
+export default router;

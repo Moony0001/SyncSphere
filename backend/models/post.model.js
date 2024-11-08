@@ -19,6 +19,11 @@ const postSchema =  new mongoose.Schema({
     route: {
         type: String,
     },
+    sport: {
+        type: String,
+        required: true,
+        enum: ["Cycling", "Running"]
+    },
     likes: [
         {
             type: mongoose.Schema.Types.ObjectId,

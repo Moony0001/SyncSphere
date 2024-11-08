@@ -13,3 +13,7 @@ Trying to take reference from the Angela Yu videos and projects to understand wh
 when a user opts for Google log in so, we add that route to the auth.routes.js.
 
 Map API: Ola
+For the tracking/drawing the line, we will write a function with a queue of size 2 that will update every 't' seconds and will run the
+polyline drawing function. also we will have to make sure the previous line doesn't get erased when the new line is made.
+
+Clubs: Club event functionality

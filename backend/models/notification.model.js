@@ -29,7 +29,7 @@ const notificationSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ["follow", "kudos", "comment"]
+        enum: ["follow", "kudos", "comment", "club_invite"]
     },
     read: {
         type: Boolean,

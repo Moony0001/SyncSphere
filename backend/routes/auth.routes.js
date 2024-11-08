@@ -11,4 +11,3 @@ router.post("/logout", logout);
 router.get("/googleauth", googleauth);
 
 export default router;
-

@@ -6,8 +6,8 @@ import bell from './bell.png'
 import user from './user.png'
 import more from './more.png'
 import cross from './cross.png'
-import SearchFilter from "./SearchFilter";
-import SideBarMenu from "./SideBarMenu";
+import SearchFilter from "../SearchFilter";
+import SideBarMenu from "../SideBarMenu";
 export default function Header({hamburger,setHamburger}) {
   const [showDashboardDropdown, setShowDashboardDropdown] = useState(false);
   const [showTrainingDropdown, setShowTrainingDropdown] = useState(false);

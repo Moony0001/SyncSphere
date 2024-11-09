@@ -1,5 +1,5 @@
 import React from 'react'
-import UserProfile from './UserProfile'
+import UserProfile from '../UserProfile'
 import Middle from './Middle'
 import NoClub from './NoClub'
 import Friends from './Friends'

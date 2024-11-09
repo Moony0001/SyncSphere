@@ -20,7 +20,6 @@ const notificationSchema = new mongoose.Schema({
     actionable_link: {
         type: String,
         required: true,
-        enum: ["/profile/:id", "/post/:id"]
     },
     display_date: {
         type: Date,

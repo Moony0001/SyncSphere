@@ -50,7 +50,7 @@ export const followUser = async (req, res) => {
             //Send notification to the user
             const newNotification  = new Notification({
                 to: id,
-                icon: currentUser.profileImg,
+                icon: currentUser.profileImg || "placeholder",
                 title: "New Follower",
                 text: `${currentUser.firstname} ${currentUser.lastname} started following you! Follow them back!`,
                 actionable_link: `/profile/${currentUser._id}`,
@@ -59,7 +59,7 @@ export const followUser = async (req, res) => {
                 read: false
             })
             await newNotification.save();
-            res.status.json({message: "User followed successfully"});
+            res.status(200).json({message: "User followed successfully"});
         }
     } catch (error) {
         console.log("Error in followUser controller: ", error.message);
@@ -79,10 +79,10 @@ export const getSuggestedUsers = async (req, res) => {
                     _id: { $ne: userId }
                 }
             },
-            {sample: {size: 10}}
+            {$sample: {size: 10}}
         ])
 
-        const filteredUsers = users.filter(user => usersFollowedByMe.following.includes(user._id.toString()));
+        const filteredUsers = users.filter(user => !usersFollowedByMe.following.includes(user._id.toString()));
         const suggestedUsers = filteredUsers.slice(0, 4);
 
         suggestedUsers.forEach(user => {

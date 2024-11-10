@@ -1,7 +1,7 @@
 import React from 'react'
-import left from './left.png'
-import right from './right.png'
-import google from './google.png'
+import left from '../../../img/left.png'
+import right from '../../../img/right.png'
+import google from '../../../img/google.png'
 import { useState } from 'react';
 export default function Login() {
     const [formData, setFormData] = useState({

@@ -1539,7 +1539,7 @@ tr:last-child td {
     display:  none;
   }
   .login-box{
-    background-image: url('../components/background.png');
+    background-image: url('../src/img/background.png');
     background-size: cover;
     background-repeat: no-repeat; 
   }
@@ -1566,7 +1566,7 @@ tr:last-child td {
     margin: auto;
   }
   .wrapper .login-box{
-     background-image: url('../components/back.png');
+     background-image: url('../src/img/back.png');
   }
 }
 @media (max-width:550px){

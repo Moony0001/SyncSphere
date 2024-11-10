@@ -1,5 +1,5 @@
 import React from 'react'
-import shield from '../../public/img/security.png'
+import shield from '../img/security.png'
 
 export default function Friends() {
   return (

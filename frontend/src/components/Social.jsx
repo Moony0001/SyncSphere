@@ -1,5 +1,5 @@
 import React from 'react';
-import gift from '../../public/img/gift.png'
+import gift from '../img/gift.png';
 const Social = () => {
   return (
     <div className="user-stats">

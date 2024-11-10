@@ -16,12 +16,13 @@ import { useState } from 'react'
 import Stats from './components/Stats'
 import Social from './components/Social'
 import Map from './components/Map'
+import HomePage from './pages/home/HomePage'
 function App() {
   const [hamburger,setHamburger] = useState(true);
   return (
      <>
      {/* <Header hamburger={hamburger} setHamburger={setHamburger}/> */}
-     <Map/>
+     <HomePage/>
      </>
   )
 }

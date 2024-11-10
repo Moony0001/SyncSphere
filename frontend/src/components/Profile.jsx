@@ -1,5 +1,5 @@
 import React from 'react';
-import aim from '../../public/img/aim.png'
+import aim from '../img/aim.png'
 const Profile = () => {
   return (
     <div className="user-profile1">

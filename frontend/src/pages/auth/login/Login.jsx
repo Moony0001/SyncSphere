@@ -3,24 +3,61 @@ import left from '../../../img/left.png'
 import right from '../../../img/right.png'
 import google from '../../../img/google.png'
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Header from '../../../components/common/Header';
+import Footer from '../../../components/common/Footer';
+
+
 export default function Login() {
-    const [formData, setFormData] = useState({
+      const [hamburger,setHamburger] = useState(true);
+
+      const [formData, setFormData] = useState({
         email: '',
         password: '',
       });
-    
-      const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-      };
+
+      const queryClient = useQueryClient();
+
+      const {mutate: loginMutation, isError, isPending, error } = useMutation({
+        mutationFn: async ({email, password}) => {
+          try {
+            const res = await fetch ("/api/auth/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({email, password}),
+            });
+            const data = await res.json();
+            if(!res.ok) {
+              throw new Error(data.error || "Failed to login");
+            }
+            console.log(data);
+            return data;
+          } catch (error) {
+            console.error(error);
+            throw error;
+          }
+        },
+        onSuccess: () => {
+          // Handle success here
+          queryClient.invalidateQueries({queryKey: ["authUser"]});
+        }
+      })
     
       const handleSubmit = (e) => {
         e.preventDefault();
-        // Handle form submission logic here
-        console.log(formData);
+        loginMutation(formData);
       };
+
+      const handleInputChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+
   return (
   <>
+  <Header hamburger={hamburger} setHamburger={setHamburger}/>
   <div className='wrapper'>
   <div className='login-box'>
     <div className='left'>
@@ -29,43 +66,41 @@ export default function Login() {
     <div className="signup-card">
       <h2>Community-Powered Motivation</h2>
       <p>
-        Track your progress and cheer each other on. Join over 100 million
-        active people on Strava for free.
+        Not a member yet? <Link to="/signup" style={{color: 'orange'}}>Sign Up</Link>
       </p>
       <br />
       <form className="signup-form" onSubmit={handleSubmit}>
         <input
+          autoComplete='off'
           type="email"
           name="email"
           placeholder="Email"
           value={formData.email}
-          onChange={handleChange}
+          onChange={handleInputChange}
           required
         />
         <input
+          autoComplete='off'
           type="password"
           name="password"
           placeholder="Password"
           value={formData.password}
-          onChange={handleChange}
+          onChange={handleInputChange}
           required
         />
         <br />
         <button type="submit" className="signup-button">
-          Log In
+          {isPending ? "Loading..." : "Log In"}
         </button>
+        {isError && <p className='text-red-500'>{error.message}</p>}
       </form>
-      <p className="terms">
-        By signing up for Strava, you agree to the{' '}
-        <a href="#">Terms of Service</a>. View our <a href="#">Privacy Policy</a>.
-      </p>
     </div>
     <div className='right'>
     <img src={right}/>
     </div>
     </div>
   </div>
-
+  <Footer />
   </>
     
   )

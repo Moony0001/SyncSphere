@@ -5,14 +5,13 @@ export default function NoClub() {
     <div className='club'>
         <div className='club-container'>
          <img src={flag}/>
-         <h3>Clubs on Strava</h3>
+         <h3>Join Clubs!</h3>
         </div>
         <p>
-            Why do it alone? Get more out of your Strava 
-            experience by joining or creating a club.
+            Why do it alone? Join or Create a Club!
         </p>
         <a href="#">
-            Create a Club on Strava
+            Create a Club
         </a>
     </div>
   )

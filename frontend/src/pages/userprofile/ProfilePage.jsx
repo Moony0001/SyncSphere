@@ -1,10 +1,11 @@
 import React from 'react'
-import Profile from './Profile'
-import Social from './Social'
-import Stats from './Stats'
-import Map from './Map'
-import OnlyMap from './OnlyMap'
-export default function PlaceHolder() {
+import Profile from '../../components/Profile'
+import Social from '../../components/Social'
+import Stats from '../../components/Stats'
+import Map from '../../components/common/Post'
+import OnlyMap from '../../components/OnlyMap'
+
+export default function ProfilePage() {
     return (
       <div className='placeholder'>
           <div className='f'>

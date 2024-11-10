@@ -1,5 +1,6 @@
 import * as React from "react"
 import { ChevronRight } from "lucide-react" // Using lucide for the icon
+import userplaceholder from '../img/user.png'
 
 export default function UserProfile() {
   return (
@@ -7,7 +8,7 @@ export default function UserProfile() {
       {/* Avatar Section */}
       <div className="avatar-section">
         <div className="avatar">
-          <span className="avatar-text">BR</span>
+          <img src={userplaceholder} className= "avatar-img" alt="User Profile" />
         </div>
         <h2 className="name">Bhuvesh Raina</h2>
       </div>
@@ -27,15 +28,6 @@ export default function UserProfile() {
           <p className="stat-value">0</p>
         </div>
       </div>
-
-      {/* Add Activity Section */}
-      <div className="add-activity">
-        <span>Add an Activity</span>
-        <ChevronRight className="chevron-icon" />
-      </div>
-      <p className="learn-more">
-        Learn how to record or upload an activity to Strava.
-      </p>
     </div>
   )
 }

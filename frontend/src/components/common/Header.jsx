@@ -8,6 +8,7 @@ import more from '../../img/more.png'
 import cross from '../../img/cross.png'
 import SearchFilter from "../SearchFilter";
 import SideBarMenu from "../SideBarMenu";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 export default function Header({hamburger,setHamburger}) {
@@ -16,6 +17,7 @@ export default function Header({hamburger,setHamburger}) {
   const [showTrainingDropdown, setShowTrainingDropdown] = useState(false);
   const [clicked , setClicked] = useState(false)
   const [profile,setProfile] = useState(false);
+  const authUser = useQueryClient().getQueryData("authUser");
 
   return (
     <>
@@ -23,7 +25,7 @@ export default function Header({hamburger,setHamburger}) {
       {/* Left section with logo, search, and dropdowns */}
       <div className="navbar-left">
         <div className="navbar-logo">
-          <span className="logo-text">STRAVA</span>
+          <span className="logo-text" style={{color: '#1177FF'}}>SyncSphere</span>
         </div>
 
         <div className="navbar-search">
@@ -78,7 +80,7 @@ export default function Header({hamburger,setHamburger}) {
       </div>
 
       {/* Right section with action buttons */}
-      <div className="navbar-right">
+      {authUser ? <div className="navbar-right">
         <button className="gift-button">
         <img src={gift}/>
         <p>Give a Gift</p>
@@ -109,7 +111,12 @@ export default function Header({hamburger,setHamburger}) {
         <span className="icon">
             <img src={bell}/>
         </span>
-      </div>
+      </div> 
+      : 
+      <button type="submit" className="signup-button">
+          Log In
+      </button>
+      }
       <img src={more} className="hamburger" onClick={()=>setHamburger(!hamburger)}/>
       {!hamburger?<SideBarMenu/>:""}
     </nav>

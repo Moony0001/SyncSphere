@@ -1,5 +1,5 @@
 import React from 'react'
-import flag from './flag.png'
+import flag from '../../public/img/flag.png'
 export default function NoClub() {
   return (
     <div className='club'>

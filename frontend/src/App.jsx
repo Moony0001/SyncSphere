@@ -11,11 +11,11 @@ import SideBarMenu from './components/SideBarMenu'
 import ClubHeader from '../src/pages/clubs/ClubHeader'
 import Club from '../src/pages/clubs/Club'
 import ClubContainer from '../src/pages/clubs/ClubContainer'
-import Profile from '../components/Profile'
+import Profile from './components/Profile'
 import { useState } from 'react'
-import Stats from '../components/Stats'
-import Social from '../components/Social'
-import Map from '../components/Map'
+import Stats from './components/Stats'
+import Social from './components/Social'
+import Map from './components/Map'
 function App() {
   const [hamburger,setHamburger] = useState(true);
   return (

@@ -3,6 +3,7 @@ import UserProfile from '../UserProfile'
 import Middle from './Middle'
 import NoClub from './NoClub'
 import Friends from './Friends'
+
 export default function Holder({hamburger,setHamburger}) {
   return (
     <div className='holder' onClick={()=>setHamburger(true)}>

@@ -1,5 +1,6 @@
 import React from 'react'
 import shield from './security.png'
+
 export default function Friends() {
   return (
     <div className='club'>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import arrow from './arrow.png'
 import cross from './cross.png'
+
+
 const SearchFilter = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState('Athletes');

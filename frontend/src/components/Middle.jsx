@@ -1,6 +1,7 @@
 import * as React from "react"
 import circle from './circle.png'
 import watch from './watch.png'
+
 export default function Middle() {
   return (
     <div className="getting-started">

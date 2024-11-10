@@ -8,11 +8,15 @@ import more from './more.png'
 import cross from './cross.png'
 import SearchFilter from "../SearchFilter";
 import SideBarMenu from "../SideBarMenu";
+
+
 export default function Header({hamburger,setHamburger}) {
+  
   const [showDashboardDropdown, setShowDashboardDropdown] = useState(false);
   const [showTrainingDropdown, setShowTrainingDropdown] = useState(false);
   const [clicked , setClicked] = useState(false)
   const [profile,setProfile] = useState(false);
+
   return (
     <>
     <nav className="navbar">

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import arrow from './arrow.png'
-import glass from './loupe.png'
-import gift from './gift.png'
-import bell from './bell.png'
-import user from './user.png'
-import more from './more.png'
-import cross from './cross.png'
+import arrow from '../../../public/img/arrow.png'
+import glass from '../../../public/img/loupe.png'
+import gift from '../../../public/img/gift.png'
+import bell from '../../../public/img/bell.png'
+import user from '../../../public/img/user.png'
+import more from '../../../public/img/more.png'
+import cross from '../../../public/img/cross.png'
 import SearchFilter from "../SearchFilter";
 import SideBarMenu from "../SideBarMenu";
 

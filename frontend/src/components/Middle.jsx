@@ -1,6 +1,6 @@
 import * as React from "react"
-import circle from './circle.png'
-import watch from './watch.png'
+import circle from '../../public/img/circle.png'
+import watch from '../../public/img/watch.png'
 
 export default function Middle() {
   return (

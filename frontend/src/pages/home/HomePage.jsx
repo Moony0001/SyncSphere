@@ -16,7 +16,7 @@ const HomePage = () => {
     return (
         <>
         <Header hamburger={hamburger} setHamburger={setHamburger}/>
-        <Holder/>
+        <Holder hamburger={hamburger} setHamburger={setHamburger}/>
         <Footer/>
         </>
     );

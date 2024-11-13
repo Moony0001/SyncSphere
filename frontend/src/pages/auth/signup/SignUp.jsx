@@ -5,7 +5,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import React from 'react'
 import left from '../../../img/left.png'
 import right from '../../../img/right.png'
-import google from '../../../img/google.png'
 import Header from '../../../components/common/Header';
 import Footer from '../../../components/common/Footer';
 import { toast } from 'react-hot-toast';
@@ -59,10 +58,6 @@ export default function SignUp() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
       };
 
-      const handleGoogleSignUp = () => {
-        window.location.href = "/api/auth/googleauth";
-      };
-
       return (
         <>
         <Header hamburger={hamburger} setHamburger={setHamburger}/>
@@ -75,12 +70,6 @@ export default function SignUp() {
           <p>
             Already a Member? <Link to="/login" style={{color: 'orange'}}>Log In</Link>
           </p>
-          <button className="google-signup-button" onClick={handleGoogleSignUp}>
-          <img src={google} alt="Google Icon" className="icon1" />
-          <div>
-          Sign Up With Google
-          </div>
-          </button>
           <br />
           <br />
           <form className="signup-form" onSubmit={handleSubmit}>

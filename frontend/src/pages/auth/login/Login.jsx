@@ -1,7 +1,6 @@
 import React from 'react'
 import left from '../../../img/left.png'
 import right from '../../../img/right.png'
-import google from '../../../img/google.png'
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -55,10 +54,6 @@ export default function Login() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
       };
 
-      const handleGoogleSignUp = () => {
-        window.location.href = "/api/auth/googleauth";
-      };
-
   return (
   <>
   <Header hamburger={hamburger} setHamburger={setHamburger}/>
@@ -68,16 +63,10 @@ export default function Login() {
     <img src={left}/>
     </div>
     <div className="signup-card">
-      <h2>Community-Powered Motivation</h2>
+      <h2 style={{color: '#C8C1C1'}}>Community-Powered Motivation</h2>
       <p>
         Not a member yet? <Link to="/signup" style={{color: 'orange'}}>Sign Up</Link>
       </p>
-      <button className="google-signup-button" onClick={handleGoogleSignUp}>
-        <img src={google} alt="Google Icon" className="icon1" />
-        <div>
-          Log In With Google
-        </div>
-      </button>
       <br />
       <br />
       <form className="signup-form" onSubmit={handleSubmit}>

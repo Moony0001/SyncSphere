@@ -9,7 +9,7 @@ export default function NoClub() {
         </div>
         <p>
             Why do it alone? <br />
-            <a href='#'> Join </a> or <a href='#'> Create a Club </a>!
+            <a href='/clubs'> Join </a> or <a href='#'> Create a Club </a>!
         </p>
     </div>
   )

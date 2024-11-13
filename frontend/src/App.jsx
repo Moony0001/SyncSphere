@@ -11,6 +11,8 @@ import { Toaster } from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import ClubContainer from './pages/clubs/ClubContainer'
+import Map from './components/common/Map'
 
 function App() {
   const {data: authUser, isLoading} = useQuery({
@@ -44,14 +46,16 @@ function App() {
   }
   return (
      <>
-     <Routes>
+     {/* <Routes>
       <Route path='/' element={authUser ? <HomePage/> : <Navigate to ="/login" />}/>
       <Route path='/login' element={!authUser ? <Login/> : <Navigate to ="/" />}/>
       <Route path='/signup' element={!authUser ? <SignUp/> : <Navigate to ="/" />}/>
       <Route path='/profile/:id' element={authUser ? <ProfilePage/> : <Navigate to ="/login" />}/>
-     </Routes>
+      <Route path='/clubs' element={authUser ? <ClubContainer/> : <Navigate to ="/login" />}/>
+     </Routes> */}
      {/* <HomePage/> */}
-     <Toaster/>
+     {/* <Toaster/> */}
+     <Map/>
      </>
   )
 }

@@ -17,3 +17,5 @@ For the tracking/drawing the line, we will write a function with a queue of size
 polyline drawing function. also we will have to make sure the previous line doesn't get erased when the new line is made.
 
 Clubs: Club event functionality
+
+The header is not wrapped in the header element, maybe that will fix the issue

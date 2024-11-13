@@ -5,7 +5,8 @@ import cycle from '../../img/cycle.png'
 import comment from '../../img/comment.png'
 import profile from '../../img/profile.png'
 import map from '../../img/map.png'
-const Map = () => {
+
+const Post = () => {
   return (
     <div className="ride-card">
       <div className="ride-header">
@@ -54,4 +55,4 @@ const Map = () => {
   );
 };
 
-export default Map;
+export default Post;

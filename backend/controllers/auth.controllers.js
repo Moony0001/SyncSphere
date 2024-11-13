@@ -11,7 +11,9 @@ export const signup = async (req, res) => {
     try {
         const {firstname, lastname, email, password, gender} = req.body;
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^/s@]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        console.log("Email received:", email);
+
         if(!emailRegex.test(email)){
             return res.status(400).json({error: "Invalid email format"});
         }
@@ -113,7 +115,19 @@ export const googleauth = async (req, res) => {
     try {
         passport.authenticate("google", {scope: ["email", "profile"]});
     } catch (error) {
-        
+        console.log("Error in googleauth controller: ", error.message);
+        res.status(500).json({error: "Internal server error"});
+    }
+}
+
+export const googleauthCallback = async (req, res) => {
+    try {
+        passport.authenticate("google", {failureRedirect: "/login"}, (req, res) => {
+            res.redirect("/");
+        });
+    } catch (error) {
+        console.log("Error in googleauthCallback controller: ", error.message);
+        res.status(500).json({error: "Internal server error"});
     }
 }
 

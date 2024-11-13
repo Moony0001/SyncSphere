@@ -55,6 +55,10 @@ export default function Login() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
       };
 
+      const handleGoogleSignUp = () => {
+        window.location.href = "/api/auth/googleauth";
+      };
+
   return (
   <>
   <Header hamburger={hamburger} setHamburger={setHamburger}/>
@@ -68,6 +72,13 @@ export default function Login() {
       <p>
         Not a member yet? <Link to="/signup" style={{color: 'orange'}}>Sign Up</Link>
       </p>
+      <button className="google-signup-button" onClick={handleGoogleSignUp}>
+        <img src={google} alt="Google Icon" className="icon1" />
+        <div>
+          Log In With Google
+        </div>
+      </button>
+      <br />
       <br />
       <form className="signup-form" onSubmit={handleSubmit}>
         <input

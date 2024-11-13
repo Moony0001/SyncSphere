@@ -48,7 +48,14 @@ const userSchema = new mongoose.Schema({
     profileImg: {
         type: String,
         default: ""
-    }
+    },
+    activities: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Activity",
+            default: []
+        }
+    ]
 }, {timeStamps: true});
 
 const User = mongoose.model("User", userSchema);

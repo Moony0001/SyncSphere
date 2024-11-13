@@ -8,11 +8,9 @@ export default function NoClub() {
          <h3>Join Clubs!</h3>
         </div>
         <p>
-            Why do it alone? Join or Create a Club!
+            Why do it alone? <br />
+            <a href='#'> Join </a> or <a href='#'> Create a Club </a>!
         </p>
-        <a href="#">
-            Create a Club
-        </a>
     </div>
   )
 }

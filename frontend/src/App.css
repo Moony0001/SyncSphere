@@ -203,7 +203,6 @@
   color: #1177FF;
   font-family: Arial, sans-serif;
   font-size: 1rem;
-  margin-left: 60px;
   font-size: 1rem;
 }
 .club p{
@@ -989,11 +988,11 @@
   max-width: 200px;
   margin: auto;
   padding: 10px;
-  margin-bottom: 80px;
+  /* margin-bottom: 80px; */
 }
 
 .profile-avatar1 {
-  background-color: #8cbe54;
+  background-color: #e0e0e0;
   border-radius: 50%;
   width: 100px;
   height: 100px;
@@ -1053,6 +1052,12 @@
   width: 100px;
   height: 37px;
   translate: 5px;
+}
+
+.follow-button:hover {
+  background-color: #FFFFFF;
+  color: #1177FF;
+  border: 1px solid #1177FF;
 }
 
 .settings-button {
@@ -1161,7 +1166,7 @@ h2 {
 }
 
 .profile-avatar {
-  background-color: #8cbe54;
+  background-color: #e0e0e0;
   color: white;
   border-radius: 50%;
   width: 40px;
@@ -1503,7 +1508,9 @@ tr:last-child td {
 }
 
 .signup-button:hover {
-  background-color: #1177FF;
+  background-color: #FFFFFF;
+  color: #1177FF;
+  border: 1px solid #1177FF;
 }
 
 .terms {
@@ -1553,6 +1560,7 @@ tr:last-child td {
 .signup-button{
   width: 100px;
   margin: auto;
+  text-align: center;
 }
 @media (max-width:10000000000px) {
   .login-box .right img{

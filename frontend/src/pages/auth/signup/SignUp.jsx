@@ -8,6 +8,7 @@ import right from '../../../img/right.png'
 import google from '../../../img/google.png'
 import Header from '../../../components/common/Header';
 import Footer from '../../../components/common/Footer';
+import { toast } from 'react-hot-toast';
 
 
 export default function SignUp() {
@@ -16,20 +17,20 @@ export default function SignUp() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        firstName: '',
-        lastName: '',
+        firstname: '',
+        lastname: '',
         gender: '',
       });
 
       const { mutate, isError, isPending, error } = useMutation({
-        mutationFn: async({email, password, firstName, lastName, gender}) => {
+        mutationFn: async({email, password, firstname, lastname, gender}) => {
           try {
             const res = await fetch("/api/auth/signup",{
               method: "POST",
               headers: {
-                "Content-Type" : "applicaton/json" ,
+                "Content-Type": "application/json" ,
               },
-              body: JSON.stringify({email, password, firstName, lastName, gender}),
+              body: JSON.stringify({email, password, firstname, lastname, gender}),
             })
 
             const data = await res.json();
@@ -58,6 +59,10 @@ export default function SignUp() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
       };
 
+      const handleGoogleSignUp = () => {
+        window.location.href = "/api/auth/googleauth";
+      };
+
       return (
         <>
         <Header hamburger={hamburger} setHamburger={setHamburger}/>
@@ -70,7 +75,7 @@ export default function SignUp() {
           <p>
             Already a Member? <Link to="/login" style={{color: 'orange'}}>Log In</Link>
           </p>
-          <button className="google-signup-button">
+          <button className="google-signup-button" onClick={handleGoogleSignUp}>
           <img src={google} alt="Google Icon" className="icon1" />
           <div>
           Sign Up With Google
@@ -100,7 +105,7 @@ export default function SignUp() {
             <input
               autoComplete='off'
               type="text"
-              name="firstName"
+              name="firstname"
               placeholder="First Name"
               value={formData.firstName}
               onChange={handleInputChange}
@@ -109,7 +114,7 @@ export default function SignUp() {
             <input
               autoComplete='off'
               type="text"
-              name="lastName"
+              name="lastname"
               placeholder="Last Name"
               value={formData.lastName}
               onChange={handleInputChange}

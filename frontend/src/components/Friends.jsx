@@ -1,9 +1,10 @@
-import React from 'react'
-import shield from '../img/security.png'
-import SuggestedFriendsSkeleton from './skeletons/SuggestedFriendsSkeleton';
-import LoadingSpinner from './common/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+
+import React from 'react'
+import shield from '../img/security.png'
+import userplaceholder from '../img/user.png'
+
 import useFollow from '../hooks/useFollow';
 
 export default function Friends() {
@@ -12,7 +13,7 @@ export default function Friends() {
 		queryKey: ["suggestedUsers"],
 		queryFn: async() => {
 			try {
-				const res = await fetch("/api/users/suggested");
+				const res = await fetch("/api/user/suggested");
 				const data = await res.json();
 				if(!res.ok) {
 					throw new Error(data.error || "Failed to fetch suggested users");
@@ -21,7 +22,7 @@ export default function Friends() {
 			} catch (error) {
 				throw new Error(error.message);
 			}
-		}
+		}, retry: false
 	})
 
 	const {follow, isPending} = useFollow();
@@ -36,12 +37,7 @@ export default function Friends() {
 			</div>
 			<div className='flex flex-col gap-4'>
 						{/* item */}
-						{isLoading && (
-							<>
-								<SuggestedFriendsSkeleton />
-								<SuggestedFriendsSkeleton />
-							</>
-						)}
+						{isLoading && "Loading..."}
 						{!isLoading &&
 							suggestedUsers?.map((user) => (
 								<Link
@@ -52,25 +48,24 @@ export default function Friends() {
 									<div className='flex gap-2 items-center'>
 										<div className='avatar'>
 											<div className='w-8 rounded-full'>
-												<img src={user.profileImg || "/avatar-placeholder.png"} />
+												<img src={user.profileImg || userplaceholder} />
 											</div>
 										</div>
 										<div className='flex flex-col'>
 											<span className='font-semibold tracking-tight truncate w-28'>
-												{user.firstName} {user.lastName}
+												{user.firstname} {user.lastname}
 											</span>
-											<span className='text-sm text-slate-500'>@{user.location}</span>
 										</div>
 									</div>
 									<div>
 										<button
-											className='btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm'
+											className='follow-button'
 											onClick={(e) => {
 												e.preventDefault();
 												follow(user._id);
 											}}
 										>
-											{isPending ? <LoadingSpinner size = 'sm' /> : "Follow"}
+											{isPending ? "Loading..." : "Follow"}
 										</button>
 									</div>
 								</Link>

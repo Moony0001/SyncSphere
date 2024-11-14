@@ -46,16 +46,16 @@ function App() {
   }
   return (
      <>
-     {/* <Routes>
+     <Routes>
       <Route path='/' element={authUser ? <HomePage/> : <Navigate to ="/login" />}/>
       <Route path='/login' element={!authUser ? <Login/> : <Navigate to ="/" />}/>
       <Route path='/signup' element={!authUser ? <SignUp/> : <Navigate to ="/" />}/>
       <Route path='/profile/:id' element={authUser ? <ProfilePage/> : <Navigate to ="/login" />}/>
       <Route path='/clubs' element={authUser ? <ClubContainer/> : <Navigate to ="/login" />}/>
-     </Routes> */}
+     </Routes>
      {/* <HomePage/> */}
-     {/* <Toaster/> */}
-     <Map/>
+     <Toaster/>
+     {/* <Map/> */}
      </>
   )
 }

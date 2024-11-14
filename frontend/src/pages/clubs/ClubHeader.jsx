@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import gift from '../../../public/img/gift.png'
+import gift from '../../img/gift.png'
+
+
 const ClubHeader = () => {
   const [selectedSport, setSelectedSport] = useState("Running");
   const [selectedClubType, setSelectedClubType] = useState("All");

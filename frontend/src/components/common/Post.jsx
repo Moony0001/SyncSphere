@@ -1,11 +1,12 @@
 import React from 'react';
-import gift from './gift.png'
-import like from './like.png'
-import cycle from './cycle.png'
-import comment from './comment.png'
-import profile from './profile.png'
-import map from './map.png'
-const Map = () => {
+import gift from '../../img/gift.png';
+import like from '../../img/like.png'
+import cycle from '../../img/cycle.png'
+import comment from '../../img/comment.png'
+import profile from '../../img/profile.png'
+import map from '../../img/map.png'
+
+const Post = () => {
   return (
     <div className="ride-card">
       <div className="ride-header">
@@ -54,4 +55,4 @@ const Map = () => {
   );
 };
 
-export default Map;
+export default Post;

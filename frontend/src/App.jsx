@@ -1,27 +1,61 @@
-import UserProfile from './components/UserProfile'
-import Header from '../src/components/common/Header'
-import Middle from './components/Middle'
-import './App.css'
-import NoClub from './components/NoClub'
-import Friends from './components/Friends'
-import Holder from './components/Holder'
-import Footer from '../src/components/common/Footer'
-import SearchFilter from './components/SearchFilter'
-import SideBarMenu from './components/SideBarMenu'
-import ClubHeader from '../src/pages/clubs/ClubHeader'
-import Club from '../src/pages/clubs/Club'
-import ClubContainer from '../src/pages/clubs/ClubContainer'
-import Profile from './components/Profile'
+//React imports
 import { useState } from 'react'
-import Stats from './components/Stats'
-import Social from './components/Social'
-import Map from './components/Map'
+
+//Component imports
+import './App.css'
+import HomePage from './pages/home/HomePage'
+import Login from './pages/auth/login/Login'
+import SignUp from './pages/auth/signup/SignUp'
+import ProfilePage from './pages/userprofile/ProfilePage'
+import { Toaster } from 'react-hot-toast'
+import { useQuery } from '@tanstack/react-query'
+import LoadingSpinner from './components/common/LoadingSpinner'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import ClubContainer from './pages/clubs/ClubContainer'
+import Map from './components/common/Map'
+
 function App() {
-  const [hamburger,setHamburger] = useState(true);
+  const {data: authUser, isLoading} = useQuery({
+    queryKey: ["authUser"],
+    queryFn: async() => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        if(data.error) {
+          return null;
+        }
+        if(!res.ok) {
+          throw new Error(data.error || "Failed to fetch user");
+        }
+        console.log("authUser is here: ", data);
+        return data;
+        
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    retry: false,
+  });
+
+  if(isLoading) {
+    return (
+      <div className='h-screen flex justify-center items-center'>
+        <LoadingSpinner size='lg'/>
+      </div>
+    )
+  }
   return (
      <>
-     {/* <Header hamburger={hamburger} setHamburger={setHamburger}/> */}
-     <Map/>
+     <Routes>
+      <Route path='/' element={authUser ? <HomePage/> : <Navigate to ="/login" />}/>
+      <Route path='/login' element={!authUser ? <Login/> : <Navigate to ="/" />}/>
+      <Route path='/signup' element={!authUser ? <SignUp/> : <Navigate to ="/" />}/>
+      <Route path='/profile/:id' element={authUser ? <ProfilePage/> : <Navigate to ="/login" />}/>
+      <Route path='/clubs' element={authUser ? <ClubContainer/> : <Navigate to ="/login" />}/>
+     </Routes>
+     {/* <HomePage/> */}
+     <Toaster/>
+     {/* <Map/> */}
      </>
   )
 }

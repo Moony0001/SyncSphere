@@ -1,7 +1,7 @@
 import React from 'react';
-import shoe from '../../public/img/shoe.png'
-import cycle from '../../public/img/cycle.png'
-import fashion from '../../public/img/fashion.png'
+import shoe from '../img/shoe.png'
+import cycle from '../img/cycle.png'
+import fashion from '../img/fashion.png'
 const Stats = () => {
   return (
     <div className="comparison-table">

@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/:id", protectRoute, getClubs);
 router.get("/myclubs/:id", protectRoute, getMyClubs);
-router.get("/search/:name", protectRoute, searchClubs);
+router.get("/", protectRoute, searchClubs);
 router.post("/new", protectRoute, createClub);
 router.post("/join/:id", protectRoute, joinClub);
 router.post("/leave/:id", protectRoute, leaveClub);

@@ -1,6 +1,6 @@
 import * as React from "react"
-import circle from '../../public/img/circle.png'
-import watch from '../../public/img/watch.png'
+import circle from '../img/circle.png'
+import watch from '../img/watch.png'
 
 export default function Middle() {
   return (
@@ -16,9 +16,6 @@ export default function Middle() {
       {/* Content Section */}
       <div className="content">
         <h1 className="title">Getting Started</h1>
-        <p className="description">
-          We’ve listed a couple of steps to help you get set up on Strava.
-        </p>
 
         {/* Step Section */}
         <div className="step">
@@ -32,14 +29,13 @@ export default function Middle() {
             </div>
             <p className="step-description">
               Set up your GPS device and seamlessly upload your workouts right
-              to Strava. No device? No problem – record and connect anytime,
-              anywhere with our mobile app.
+              here
             </p>
           </div>
         </div>
 
         {/* Button */}
-        <button className="connect-button">Connect Device</button>
+        <button className="connect-button">Record Activity</button>
       </div>
     </div>
   )

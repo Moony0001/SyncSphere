@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import arrow from '../../public/img/arrow.png'
-import cross from '../../public/img/cross.png'
+import arrow from '../img/arrow.png'
+import cross from '../img/cross.png'
 
 
 const SearchFilter = () => {

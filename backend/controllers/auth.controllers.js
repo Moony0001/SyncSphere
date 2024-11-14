@@ -1,8 +1,6 @@
 import { generateTokenAndSetCookie } from '../lib/utils/generateToken.js';
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
-import passport from 'passport';
-import GoogleStrategy from 'passport-google-oauth2';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,7 +9,9 @@ export const signup = async (req, res) => {
     try {
         const {firstname, lastname, email, password, gender} = req.body;
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^/s@]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        console.log("Email received:", email);
+
         if(!emailRegex.test(email)){
             return res.status(400).json({error: "Invalid email format"});
         }
@@ -108,25 +108,3 @@ export const getMe = async (req, res) => {
         res.status(500).json({error: "Internal server error"});
     }
 }
-
-export const googleauth = async (req, res) => {
-    try {
-        passport.authenticate("google", {scope: ["email", "profile"]});
-    } catch (error) {
-        
-    }
-}
-
-passport.use("google", new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/google/secrets",
-    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
-}, async (accessToken, refreshToken, profile, cb) => {
-    console.log(profile);
-    const {email} = profile;
-
-    User.findOrCreate({email}, (err, user) => {
-        return cb(err, user);
-    })
-}))

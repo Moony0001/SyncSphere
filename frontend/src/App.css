@@ -1,3 +1,8 @@
+.app-theme {
+  color: #1177FF
+}
+
+
 .profile-card {
   width: 200px;
   padding: 16px;
@@ -29,6 +34,12 @@
 .avatar-text {
   font-size: 24px;
   color: #888;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
 }
 
 .name {
@@ -65,13 +76,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #fc5200;
+  color: #1177FF;
   font-weight: 500;
   cursor: pointer;
 }
 
 .chevron-icon {
-  color: #fc5200;
+  color: #1177FF;
   width: 16px;
   height: 16px;
 }
@@ -147,7 +158,7 @@
 }
 
 .connect-button {
-  background-color: #fc5200;
+  background-color: #1177FF;
   color: white;
   padding: 10px 16px;
   border: none;
@@ -159,7 +170,7 @@
 }
 
 .connect-button:hover {
-  background-color: #e04700;
+  background-color: #1177FF;
 }
 .club-container img{
    height: 33px;
@@ -185,10 +196,9 @@
 }
 .club a{
   text-decoration: none;
-  color: orangered;
+  color: #1177FF;
   font-family: Arial, sans-serif;
   font-size: 1rem;
-  margin-left: 60px;
   font-size: 1rem;
 }
 .club p{
@@ -219,7 +229,7 @@
 .navbar-logo .logo-text {
   font-size: 24px;
   font-weight: bold;
-  color: #fc5200;
+  color: #1177FF;
 }
 
 /* Search icon */
@@ -238,7 +248,7 @@
 }
 
 .menu-item:hover {
-  color: #fc5200;
+  color: #1177FF;
 }
 
 .dropdown {
@@ -268,7 +278,7 @@
 
 .dropdown-item:hover {
   background-color: #f5f5f5;
-  color: #fc5200;
+  color: #1177FF;
 }
 
 /* Action buttons */
@@ -291,12 +301,12 @@
 
 .trial-button {
   color: white;
-  background-color: #fc5200;
+  background-color: #1177FF;
   border: none;
 }
 
 .trial-button:hover {
-  background-color: #e04700;
+  background-color: #1177FF;
 }
 
 /* Icons */
@@ -306,7 +316,7 @@
 }
 
 .icon:hover {
-  color: #fc5200;
+  color: #1177FF;
 }
 
 .navbar img{
@@ -334,13 +344,13 @@
   translate: -5px;
 }
 .holder{
-   display: flex;
-   justify-content: space-evenly;
-   width: 90%;
-   margin-left: auto;
-   margin-right: auto;
-   margin-top: 70px;
-   margin-bottom: 150px;
+  display: flex;
+  box-sizing: border-box;
+  justify-content: center;
+  flex-wrap: nowrap;
+  margin-left: calc(1rem / -2);
+  margin-right: calc(1rem / -2);
+  gap: calc(1rem / 2);
 }
 .tc3{
   display: flex;
@@ -506,8 +516,16 @@
  .tc1{
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-left: calc(0 / 12* 100%);
+  padding: 0;
+  
  }
  .search-filter{
   display: none;
@@ -569,7 +587,7 @@
   margin: 0 0 10px;
   font-size: 14px;
   font-weight: bold;
-  color: #ff5500;
+  color: #1177FF;
   text-transform: uppercase;
 }
 
@@ -586,7 +604,7 @@
 }
 
 .menu-section ul li.active {
-  color: #ff5500;
+  color: #1177FF;
   font-weight: bold;
 }
 .menu-section a{
@@ -609,8 +627,8 @@
 
 .gift-button {
   background-color: white;
-  color: #ff5500;
-  border: 1px solid #ff5500;
+  color: #1177FF;
+  border: 1px solid #1177FF;
   padding: 10px;
   margin-bottom: 10px;
   cursor: pointer;
@@ -620,7 +638,7 @@
 }
 
 .trial-button {
-  background-color: #ff5500;
+  background-color: #1177FF;
   color: white;
   border: none;
   padding: 10px;
@@ -690,12 +708,12 @@
 .clubs-title {
   font-size: 32px;
   font-weight: bold;
-  color: orangered;
+  color: #1177FF;
   margin: 0;
 }
 
 .clubs-create-button {
-  background-color: orangered;
+  background-color: #1177FF;
   color: white;
   border: none;
   border-radius: 5px;
@@ -789,7 +807,7 @@
 
 /* Search Button */
 .clubs-search-button {
-  background-color: orangered;
+  background-color: #1177FF;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -860,7 +878,7 @@
 }
 
 .join-button {
-  background-color: #ff5a36;
+  background-color: #1177FF;
   color: white;
   border: none;
   border-radius: 4px;
@@ -966,11 +984,11 @@
   max-width: 200px;
   margin: auto;
   padding: 10px;
-  margin-bottom: 80px;
+  /* margin-bottom: 80px; */
 }
 
 .profile-avatar1 {
-  background-color: #8cbe54;
+  background-color: #e0e0e0;
   border-radius: 50%;
   width: 100px;
   height: 100px;
@@ -1020,7 +1038,7 @@
 }
 
 .follow-button {
-  background-color: #e65c00;
+  background-color: #1177FF;
   color: white;
   border: none;
   padding: 8px 15px;
@@ -1030,6 +1048,12 @@
   width: 100px;
   height: 37px;
   translate: 5px;
+}
+
+.follow-button:hover {
+  background-color: #FFFFFF;
+  color: #1177FF;
+  border: 1px solid #1177FF;
 }
 
 .settings-button {
@@ -1138,7 +1162,7 @@ h2 {
 }
 
 .profile-avatar {
-  background-color: #8cbe54;
+  background-color: #e0e0e0;
   color: white;
   border-radius: 50%;
   width: 40px;
@@ -1342,6 +1366,17 @@ tr:last-child td {
   display: flex;
   align-items: center;
 }
+
+#root, #app, html, body {
+  height: 100%;
+  margin: 0;
+}
+
+#map {
+  width: 100%;
+  height: 80%;
+}
+
 @media (max-width:1400px){
     .placeholder{
       max-width: 10000px;
@@ -1428,12 +1463,12 @@ tr:last-child td {
 .signup-card {
   width: 380px;
   min-width: 240px;
-  margin-top: 100px;
+  margin-top: 50px;
   padding: 20px;
   border-radius: 10px;
   text-align: center;
   font-family: Arial, sans-serif;
-  height: 600px;
+  height: 580px;
 
 }
 
@@ -1469,7 +1504,7 @@ tr:last-child td {
 }
 
 .signup-button {
-  background-color: #fc5200;
+  background-color: #1177FF;
   color: #fff;
   padding: 10px;
   font-size: 16px;
@@ -1480,7 +1515,9 @@ tr:last-child td {
 }
 
 .signup-button:hover {
-  background-color: #e04a00;
+  background-color: #FFFFFF;
+  color: #1177FF;
+  border: 1px solid #1177FF;
 }
 
 .terms {
@@ -1490,7 +1527,7 @@ tr:last-child td {
 }
 
 .terms a {
-  color: #fc5200;
+  color: #1177FF;
   text-decoration: none;
 }
 
@@ -1530,6 +1567,7 @@ tr:last-child td {
 .signup-button{
   width: 100px;
   margin: auto;
+  text-align: center;
 }
 @media (max-width:10000000000px) {
   .login-box .right img{
@@ -1539,7 +1577,7 @@ tr:last-child td {
     display:  none;
   }
   .login-box{
-    background-image: url('../components/background.png');
+    background-image: url('../src/img/background.jpg');
     background-size: cover;
     background-repeat: no-repeat; 
   }
@@ -1566,17 +1604,18 @@ tr:last-child td {
     margin: auto;
   }
   .wrapper .login-box{
-     background-image: url('../components/back.png');
+     background-image: url('../src/img/back.jpg');
   }
 }
 @media (max-width:550px){
   .signup-card{
     margin-top: 40px;
     width: 200px;
-    background-color: rgba(0,0,0,0);
+    height: fit-content;
+    background-color: rgba(0,0,0,0.6);
   }
   .signup-card p{
-    color: rgb(109, 105, 105);
+    color: rgb(253, 253, 253);
   }
   .google-signup-button{
     font-size: 13px;

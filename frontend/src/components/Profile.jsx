@@ -1,5 +1,4 @@
-import React from 'react';
-import aim from '../../public/img/aim.png'
+import aim from '../img/aim.png'
 const Profile = () => {
   return (
     <div className="user-profile1">
@@ -19,7 +18,7 @@ const Profile = () => {
       </div>
       <br />
       <div className="profile-actions">
-        <button className="follow-button">Follow</button>
+        {/* {() ? <button className="follow-button">Follow</button> : ""} */}
       </div>
     </div>
   );

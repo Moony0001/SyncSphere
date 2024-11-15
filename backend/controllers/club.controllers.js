@@ -29,13 +29,36 @@ export const getMyClubs = async (req, res) => {
 
 export const searchClubs = async (req, res) => {
     try {
-        const clubs = await Club.find({ name: { $regex: req.params.name, $options: "i" } });
+        const { clubname, location, sport, scope } = req.query; // Extract the query parameters
+        let query = {}; // Initialize an empty query object
+
+        console.log('Received query parameters:', req.query);
+
+        // Only add filters if they are provided
+        if (clubname) query.name = { $regex: clubname, $options: "i" }; // Case-insensitive regex
+        if (location) query.location = { $regex: location, $options: "i" };
+        if (sport && sport !== "All") query.sport = sport;
+        if (scope && scope !== "All") query.scope = scope;
+
+        // If no filters are provided, return an empty array
+        if (Object.keys(query).length === 0) {
+            return res.status(200).json([]); // No clubs, so send an empty array
+        }
+        
+        console.log('Constructed MongoDB query:', query);
+
+        // Fetch clubs based on the constructed query
+        const clubs = await Club.find(query); // Replace with your actual Club model
+
+        // Send the filtered clubs as a response
         res.status(200).json(clubs);
+        
     } catch (error) {
         console.log("Error in searchClubs controller: ", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 
 export const createClub = async (req, res) => {
     try {
@@ -61,7 +84,9 @@ export const joinClub = async (req, res) => {
         }
         
         await Club.findByIdAndUpdate(id, { $push: { members: req.user._id } });
-        res.status(200).json({message: "User joined club successfully"});
+        await User.findByIdAndUpdate(req.user._id, { $push: { clubs: id } });
+        const updatedMembers = club.members;
+        res.status(200).json(updatedMembers);
 
     } catch (error) {
         console.log("Error in joinClub controller: ", error.message);
@@ -84,6 +109,7 @@ export const leaveClub = async (req, res) => {
             return res.status(404).json({error: "User not found"});
         }
         await Club.findByIdAndUpdate(id, { $pull: { members: userId } });
+        await User.findByIdAndUpdate(userId, { $pull: { clubs: id } });
         res.status(200).json({message: "User left club successfully"});
     } catch (error) {
         console.log("Error in leaveClub controller: ", error.message);
@@ -177,6 +203,7 @@ export const deleteClub = async (req, res) => {
         if(club.coverImg){
             await cloudinary.uploader.destroy(club.coverImg.split("/").pop().split(".")[0]);
         }
+        await User.updateMany({clubs: id}, { $pull: { clubs: id } });
         await Club.findByIdAndDelete(id);
         res.status(200).json({message: "Club deleted successfully"});
     } catch (error) {

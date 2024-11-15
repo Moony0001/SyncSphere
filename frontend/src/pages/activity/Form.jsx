@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Map from '../src/components/common/Map';
+import Map from '../../components/common/Map';
 function Form({setPage,page}) {
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState('');

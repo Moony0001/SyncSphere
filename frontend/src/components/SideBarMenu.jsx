@@ -14,7 +14,7 @@ const SideBarMenu = () => {
         <br />
         <ul>
           <li className="active">
-          <h3>Traning</h3>
+          <h3>Training</h3>
           </li>
           <li><a href="#">My Activity</a></li>
         </ul>
@@ -39,22 +39,11 @@ const SideBarMenu = () => {
           <li>Fitness & Freshness</li>
         </ul>
       </div>
-
-      <div className="bottom-section">
-        <button className="gift-button">
-        <img src={gift}/>
-        <p>
-        Give a Gift
-        </p>
-         </button>
-        <button className="trial-button">Start Trial</button>
-      </div>
-
       <div className="user-section">
         <div className="user-profile">
-        <a href="#">
-        User Profile
-        </a>
+          <a href="#">
+            User Profile
+          </a>
         </div>
         <div className="logout">Logout</div>
       </div>

@@ -82,7 +82,7 @@ export default function Header({hamburger,setHamburger}) {
             {showDashboardDropdown && (
               <div className="dropdown dropdown-wide">
                 <a href="/" className="dropdown-item">My Activities</a>
-                <a href="#" className="dropdown-item">Friends' Activities</a>
+                <a href="#" className="dropdown-item">Friend's Activities</a>
                 <a href="#" className="dropdown-item">Stats</a>
               </div>
             )}

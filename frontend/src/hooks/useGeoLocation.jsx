@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
-
 export default function useGeolocation() {
-    const [position, setPosition] = useState(null);
+    const [position, setPosition] = useState({
+        latitude: null,
+        longitude: null,
+    });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -16,14 +18,15 @@ export default function useGeolocation() {
 
         function onSuccess(coords) {
             setPosition({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
+                latitude: coords.coords.latitude,
+                longitude: coords.coords.longitude,
             });
             setLoading(false);
         }
 
         function onError(error) {
-            console.error("Error retrieving geolocation: ",error);
+            console.error("Error retrieving geolocation: ", error);
+            setError(error);
             setLoading(false);
         }
 

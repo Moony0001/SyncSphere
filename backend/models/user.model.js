@@ -55,7 +55,14 @@ const userSchema = new mongoose.Schema({
             ref: "Activity",
             default: []
         }
-    ]
+    ],
+    clubs: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Club",
+            default: []
+        }
+    ],
 }, {timeStamps: true});
 
 const User = mongoose.model("User", userSchema);

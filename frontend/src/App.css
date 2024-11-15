@@ -722,7 +722,9 @@
 }
 
 .clubs-create-button:hover {
-  background-color: #444;
+  background-color: #FFFFFF;
+  color: #1177FF;
+  border: 1px solid #1177FF;
 }
 
 /* Image Container */
@@ -816,7 +818,9 @@
 }
 
 .clubs-search-button:hover {
-  background-color: #444;
+  background-color: #FFFFFF;
+  color: #1177FF;
+  border: 1px solid #1177FF;
 }
 
 .club-card1{

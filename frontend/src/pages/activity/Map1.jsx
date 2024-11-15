@@ -1,5 +1,5 @@
 import React from 'react'
-import Map from '../src/components/common/Map'
+import Map from '../../components/common/Map'
 import shoe from '../src/img/shoe.png'
 import sneakers from '../src/img/sneakers.png'
 import cycle from '../src/img/cycle.png'

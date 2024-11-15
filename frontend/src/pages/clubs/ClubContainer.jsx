@@ -3,17 +3,16 @@ import Club from './Club'
 import ClubHeader from './ClubHeader'
 import Header from '../../components/common/Header'
 import Footer from '../../components/common/Footer'
+import { useQuery } from '@tanstack/react-query'
 
 
 export default function ClubContainer() {
-    const arr = [<Club/>,<Club/>,<Club/>,<Club/>,<Club/>]
-    const [hamburger, setHamburger] = useState(false)
+    const [hamburger, setHamburger] = useState(true)
   return (
     <>
       <Header hamburger = {hamburger} setHamburger = {setHamburger}/>
       <div className='contains-club'> 
         <ClubHeader/>
-        {arr}
       </div>
       <Footer />
     </>

@@ -1,6 +1,7 @@
 import * as React from "react"
 import circle from '../img/circle.png'
 import watch from '../img/watch.png'
+import { Link } from "react-router-dom"
 
 export default function Middle() {
   return (
@@ -35,7 +36,9 @@ export default function Middle() {
         </div>
 
         {/* Button */}
+        <Link to={"/post/create"}>
         <button className="connect-button">Record Activity</button>
+        </Link>
       </div>
     </div>
   )

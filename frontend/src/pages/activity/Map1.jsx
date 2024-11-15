@@ -1,8 +1,8 @@
 import React from 'react'
 import Map from '../../components/common/Map'
-import shoe from '../src/img/shoe.png'
-import sneakers from '../src/img/sneakers.png'
-import cycle from '../src/img/cycle.png'
+import shoe from '../../img/shoe.png'
+import sneakers from '../../img/sneakers.png'
+import cycle from '../../img/cycle.png'
 export default function Map1({setPage,page}){
   return (
     <>

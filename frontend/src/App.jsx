@@ -13,6 +13,7 @@ import LoadingSpinner from './components/common/LoadingSpinner'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ClubContainer from './pages/clubs/ClubContainer'
 import Map from './components/common/Map'
+import RecordActivity from './pages/activity/RecordActivity'
 
 function App() {
   const {data: authUser, isLoading} = useQuery({
@@ -52,6 +53,7 @@ function App() {
       <Route path='/signup' element={!authUser ? <SignUp/> : <Navigate to ="/" />}/>
       <Route path='/profile/:id' element={authUser ? <ProfilePage/> : <Navigate to ="/login" />}/>
       <Route path='/clubs/' element={authUser ? <ClubContainer/> : <Navigate to ="/login" />}/>
+      <Route path='/post/create' element={authUser ? <RecordActivity/> : <Navigate to ="/login" />}/>
      </Routes>
      {/* <HomePage/> */}
      <Toaster/>

@@ -3,7 +3,7 @@ import Map from '../../components/common/Map'
 import shoe from '../../img/shoe.png'
 import sneakers from '../../img/sneakers.png'
 import cycle from '../../img/cycle.png'
-export default function Map1({setPage,page,setIsRecording,setSelectedSport}) {
+export default function Map1({ setPage, page, setIsRecording, setSelectedSport, startTimer}) {
 
   const handleSportSelection = (sport) => {
     setSelectedSport(sport); // Update selected sport in parent state
@@ -27,6 +27,7 @@ export default function Map1({setPage,page,setIsRecording,setSelectedSport}) {
           <div className='start-button' onClick={() => {
             setIsRecording(true);
             setPage((prev) => ({ ...prev, first: false , second: true}))
+            startTimer();
           }}
         >
            START

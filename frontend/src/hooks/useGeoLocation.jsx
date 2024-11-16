@@ -17,20 +17,32 @@ export default function useGeolocation() {
         }
 
         function onSuccess(coords) {
-            setPosition({
-                latitude: coords.coords.latitude,
-                longitude: coords.coords.longitude,
-            });
-            setLoading(false);
+            const { latitude, longitude } = coords.coords;
+
+    setPosition((prev) => {
+            // Skip update if no significant change
+            if (
+                prev &&
+                prev.latitude === latitude &&
+                prev.longitude === longitude
+            ) {
+                return prev;
+            }
+            return { latitude, longitude };
+        });
+
+        setLoading(false);
         }
 
         function onError(error) {
             console.error("Error retrieving geolocation: ", error);
-            setError(error);
+            setError(err.message || "Failed to retrieve location");
             setLoading(false);
         }
 
-        const watcher = geo.watchPosition(onSuccess, onError);
+        const watcher = geo.watchPosition(onSuccess, onError, {
+            enableHighAccuracy: true,
+        });
 
         return () => geo.clearWatch(watcher);
     }, []);

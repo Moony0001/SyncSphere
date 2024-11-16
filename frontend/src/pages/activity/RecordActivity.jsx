@@ -16,6 +16,8 @@ export default function RecordActivity() {
     const [selectedSport, setSelectedSport] = useState(null);
     const [timer, setTimer] = useState(0); // Timer in seconds
     const [isTimerRunning, setIsTimerRunning] = useState(false);
+    const [distance, setDistance] = useState(0);
+
     const timerRef = useRef(null);
 
     // Start the timer
@@ -48,13 +50,14 @@ export default function RecordActivity() {
     
     return (
         <>   
-            <Map isRecording={isRecording}/>
+            <Map isRecording={isRecording} distance={distance} setDistance={setDistance} />
             {page.first && (
                 <Map1 
                 setPage={setPage} 
                 page={page} 
                 setIsRecording={setIsRecording}
                 setSelectedSport={setSelectedSport}
+                startTimer={startTimer}
                 />
             )}
             {page.second && (
@@ -63,6 +66,9 @@ export default function RecordActivity() {
                 page={page} 
                 startTimer={startTimer}
                 pauseTimer={pauseTimer}
+                setIsRecording={setIsRecording}
+                distance={distance} 
+                setDistance={setDistance}
                 timer={timer}
                 />
             )}
@@ -72,13 +78,15 @@ export default function RecordActivity() {
                 page={page}
                 startTimer={startTimer}
                 pauseTimer={pauseTimer}
+                setIsRecording={setIsRecording}
+                distance={distance} 
                 timer={timer}
                 />
             )}
             {
                page.fourth &&
                 (<div className='top-level'>
-                 <Form selectedSport={selectedSport} finalTime={timer}/>
+                 <Form selectedSport={selectedSport} finalTime={timer} finalDistance={distance.toFixed(2)}/>
                 </div>)
             } 
         </>

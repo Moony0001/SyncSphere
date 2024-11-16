@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Map from '../../components/common/Map';
-function Form({ selectedSport, finalTime }) {
+function Form({ selectedSport, finalTime, finalDistance }) {
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
@@ -16,6 +16,7 @@ function Form({ selectedSport, finalTime }) {
     const postData = {
       sport: selectedSport,
       duration: finalTime, // Timer value in seconds
+      distance: finalDistance,
       title,
       text,
       image,

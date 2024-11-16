@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Map from '../../components/common/Map';
-function Form({setPage,page}) {
+function Form({ selectedSport, finalTime }) {
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
@@ -13,18 +13,24 @@ function Form({setPage,page}) {
   };
 
   const handleSave = () => {
+    const postData = {
+      sport: selectedSport,
+      duration: finalTime, // Timer value in seconds
+      title,
+      text,
+      image,
+    };
+    console.log(postData);
     alert("Form saved!");
   };
 
   return ( 
-    
-         <div className="form-container">
-    
+    <div className="form-container">
     <br />
     <br />
       <div className="form-header">
-      <h2>Make Your Spot Stand Out!</h2>
-      <p>Fill in the details below to create a personalized entry.</p>
+        <h2>Make Your Spot Stand Out!</h2>
+        <p>Fill in the details below to create a personalized entry.</p>
       </div>
 
       <input

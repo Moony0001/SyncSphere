@@ -4,7 +4,6 @@ import SearchFilter from './SearchFilter';
 const SideBarMenu = () => {
   return (
     <div className="sidebar-menu">
-     <SearchFilter/>
       <div className="menu-section">
         <ul>
           <li className="active">

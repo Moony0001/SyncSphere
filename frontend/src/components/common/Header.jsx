@@ -8,6 +8,7 @@ import more from '../../img/more.png'
 import cross from '../../img/cross.png'
 import SearchFilter from "../SearchFilter";
 import SideBarMenu from "../SideBarMenu";
+import logo from '../../img/syncsphere.png'
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useLocation, Link } from 'react-router-dom';
 
@@ -53,6 +54,7 @@ export default function Header({hamburger,setHamburger}) {
         <div className="navbar-left">
           <Link to={"/"}>
           <div className="navbar-logo">
+            <img src={logo}/>
             <span className="logo-text" style={{color: '#1177FF'}}>SyncSphere</span>
           </div>
           </Link>
@@ -134,7 +136,7 @@ export default function Header({hamburger,setHamburger}) {
                 </div>
               )}
             </div>
-            <span className="icon">
+            <span className="icon" id="bell">
                 <img src={bell}/>
             </span>
           </div></div>

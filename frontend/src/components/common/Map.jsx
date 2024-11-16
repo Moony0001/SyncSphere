@@ -5,7 +5,7 @@ import L from "leaflet";
 import marker from "../../img/marker.png"
 
 
-export default function Map() {
+export default function Map({isRecording}) {
 
     const mapRef = useRef(null);
     var myIcon = L.icon({
@@ -30,10 +30,11 @@ export default function Map() {
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: '© SyncSphere'
             }).addTo(mapRef.current);
-        }
 
-        polylineRef.current = L.polyline([], {color: 'red'}).addTo(mapRef.current);
-    }, []);
+            polylineRef.current = L.polyline([], {color: 'red'}).addTo(mapRef.current);
+
+        }
+    }, [coordinates.latitude, coordinates.longitude]);
 
     useEffect(() => {
         setCoordinates({...coordinates})
@@ -56,6 +57,25 @@ export default function Map() {
         polylineRef.current.setLatLngs(latlngs.current);
     }, [location, coordinates.latitude, coordinates.longitude]);
 
+    useEffect(() => {
+        if (!isRecording) return;
+    
+        // Start drawing the line when isRecording is true
+        if (location.latitude !== 0 && location.longitude !== 0) {
+          latlngs.current.push([location.latitude, location.longitude]);
+          polylineRef.current.setLatLngs(latlngs.current);
+        }
+      }, [isRecording, location.latitude, location.longitude]);
+
+      useEffect(() => {
+        // Cleanup on unmount
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+        };
+       }, []);
 
     return (
         <div id="map"></div>

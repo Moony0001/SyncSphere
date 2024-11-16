@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import Profile from '../../components/Profile'
-import Social from '../../components/Social'
 import Stats from '../../components/Stats'
 import Header from '../../components/common/Header'
 import Footer from '../../components/common/Footer'

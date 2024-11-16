@@ -22,7 +22,15 @@ const postSchema =  new mongoose.Schema({
     sport: {
         type: String,
         required: true,
-        enum: ["Cycling", "Running"]
+        enum: ["Cycling", "Running", "Walking"]
+    },
+    time: {
+        type: String,
+        required: true
+    },
+    distance: {
+        type: Number,
+        required: true
     },
     likes: [
         {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Map1 from './Map1';
 import Map2 from './Map2';
 import Map3 from './Map3';
@@ -12,16 +12,73 @@ export default function RecordActivity() {
         fourth: false,
     });
 
+    const [isRecording, setIsRecording] = useState(false);
+    const [selectedSport, setSelectedSport] = useState(null);
+    const [timer, setTimer] = useState(0); // Timer in seconds
+    const [isTimerRunning, setIsTimerRunning] = useState(false);
+    const timerRef = useRef(null);
+
+    // Start the timer
+    const startTimer = () => {
+        if (!isTimerRunning) {
+            setIsTimerRunning(true);
+            timerRef.current = setInterval(() => {
+                setTimer((prev) => prev + 1);
+            }, 1000); // Increment timer every second
+        }
+    };
+
+    // Pause the timer
+    const pauseTimer = () => {
+        clearInterval(timerRef.current);
+        setIsTimerRunning(false);
+    };
+
+    // Reset the timer
+    const resetTimer = () => {
+        clearInterval(timerRef.current);
+        setIsTimerRunning(false);
+        setTimer(0);
+    };
+
+    // Cleanup interval on unmount
+    useEffect(() => {
+        return () => clearInterval(timerRef.current);
+    }, []);
+    
     return (
         <>   
-            <Map/>
-            {page.first && <Map1 setPage={setPage} page={page} />}
-            {page.second && <Map2 setPage={setPage} page={page} />}
-            {page.third && <Map3 setPage={setPage} page={page} />}
+            <Map isRecording={isRecording}/>
+            {page.first && (
+                <Map1 
+                setPage={setPage} 
+                page={page} 
+                setIsRecording={setIsRecording}
+                setSelectedSport={setSelectedSport}
+                />
+            )}
+            {page.second && (
+                <Map2 
+                setPage={setPage} 
+                page={page} 
+                startTimer={startTimer}
+                pauseTimer={pauseTimer}
+                timer={timer}
+                />
+            )}
+            {page.third && (
+                <Map3 
+                setPage={setPage} 
+                page={page}
+                startTimer={startTimer}
+                pauseTimer={pauseTimer}
+                timer={timer}
+                />
+            )}
             {
                page.fourth &&
                 (<div className='top-level'>
-                 <Form />
+                 <Form selectedSport={selectedSport} finalTime={timer}/>
                 </div>)
             } 
         </>

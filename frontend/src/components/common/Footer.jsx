@@ -99,7 +99,7 @@ export default function Page() {
               <li style={listItemStyle}><a href="#" style={linkStyle}>Segments</a></li>
             </ul>
           </div>
-          {/* <div style={sectionStyle}>
+          <div style={sectionStyle}>
             <h3 style={headingStyle}>Follow</h3>
             <div style={socialIconsStyle}>
               <a href="#" aria-label="Facebook" style={iconStyle}>
@@ -115,7 +115,7 @@ export default function Page() {
                 <i className="icon-youtube"></i>
               </a>
             </div>
-          </div> */}
+          </div>
           <div style={sectionStyle}>
             <h3 style={headingStyle}>Help</h3>
             <ul style={listStyle}>
@@ -123,13 +123,13 @@ export default function Page() {
               <li style={listItemStyle}><a href="#" style={linkStyle}>Privacy</a></li>
             </ul>
           </div>
-          {/* <div style={sectionStyle}>
+          <div style={sectionStyle}>
             <h3 style={headingStyle}>Download</h3>
             <div style={appButtonsStyle}>
               <img src="appstore.png" alt="App Store" style={appButtonImageStyle} />
               <img src="googleplay.png" alt="Google Play" style={appButtonImageStyle} />
             </div>
-          </div> */}
+          </div>
         </div>
         <div style={footerBottomStyle}>
           <p style={copyrightStyle}>&copy; {new Date().getFullYear()} Strava. All rights reserved.</p>

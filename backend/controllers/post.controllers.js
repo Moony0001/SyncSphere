@@ -35,12 +35,7 @@ export const getMyActivities = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        const user = await User.findOne({userId});
-        if(!user){
-            return res.status(404).json({error: "User not found"});
-        }
-        
-        const posts = await Post.find({user: user._id}).sort({createdAt: -1})
+        const posts = await Post.find({user: userId}).sort({createdAt: -1})
         .populate({
             path: "user",
             select: "-password",
@@ -60,9 +55,9 @@ export const getMyActivities = async (req, res) => {
 
 export const getUserPosts = async (req, res) => {
     try {
-        const {username} = req.params;
+        const {id} = req.params;
 
-        const user = await User.findOne({username});
+        const user = await User.findById(id);
 
         if(!user){
             return res.status(404).json({error: "User not found"});
@@ -88,7 +83,7 @@ export const getUserPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
     try {
-        const {text, route} = req.body;
+        const {text, title, sport, time, distance, route} = req.body;
         let {img} = req.body;
         const userId = req.user._id.toString();
 
@@ -97,8 +92,10 @@ export const createPost = async (req, res) => {
         if(!user){
             return res.status(404).json({error: "User not found"});
         }
-        if(!text && !img){
-            return res.status(400).json({error: "Please provide text or image"});
+
+        // An activity post needs these fields (the Post model marks them required).
+        if(!title || !sport || time === undefined || distance === undefined){
+            return res.status(400).json({error: "Title, sport, time and distance are required"});
         }
 
         if(img){
@@ -108,11 +105,20 @@ export const createPost = async (req, res) => {
 
         const newPost = new Post({
             user: userId,
+            title,
             text,
             img,
+            route,
+            sport,
+            time,
+            distance,
         })
 
         await newPost.save();
+
+        // Keep the user's activities list in sync so the profile count is correct.
+        await User.findByIdAndUpdate(userId, { $push: { activities: newPost._id } });
+
         res.status(201).json(newPost);
     } catch (error) {
         console.log("Error in createPost controller: ", error.message);
@@ -149,9 +155,9 @@ export const likePost = async (req, res) => {
 
             const notification = new Notification ({
                 to: post.user,
-                icon: userId.profileImg,
+                icon: req.user.profileImg || "placeholder",
                 title: "New Kudos",
-                text: `${userId.firstname} ${userId.lastname} gave you Kudos on ${post.title}!`,
+                text: `${req.user.firstname} ${req.user.lastname} gave you Kudos on ${post.title}!`,
                 actionable_link: `/post/${postId}`,
                 display_date: new Date(),
                 read: false,
@@ -178,7 +184,7 @@ export const commentOnPost = async (req, res) => {
             return res.status(400).json({error: "Comment must have text"});
         }
 
-        const post = await Post.findById(req.params._id);
+        const post = await Post.findById(req.params.id);
         if(!post){
             return res.status(404).json({error: "Post not found"});
         }
@@ -193,9 +199,9 @@ export const commentOnPost = async (req, res) => {
 
         const notification = new Notification({
             to: post.user,
-            icon: userId.profileImg,
+            icon: req.user.profileImg || "placeholder",
             title: "New Comment",
-            text: `${userId.firstname} ${userId.lastname} commented on ${post.title}!`,
+            text: `${req.user.firstname} ${req.user.lastname} commented on ${post.title}!`,
             actionable_link: `/post/${post._id}`,
             display_date: new Date(),
             read: false,
@@ -213,18 +219,21 @@ export const commentOnPost = async (req, res) => {
 
 export const deletePost = async (req, res) => {
     try {
-        const post = await Post.findById(req.params._id);
+        const post = await Post.findById(req.params.id);
         if(!post){return res.status(404).json({error: "Post not found"})}
         if(post.user.toString() !== req.user._id.toString()){
             return res.status(401).json({error: "You are not authorized to delete this post"})
         }
 
         if(post.img){
-            const imgId = post.img.split("/").pop.split(".")[0];
+            const imgId = post.img.split("/").pop().split(".")[0];
             await cloudinary.uploader.destroy(imgId);
         }
 
-        await Post.findByIdAndDelete(req.params._id);
+        await Post.findByIdAndDelete(req.params.id);
+
+        // Keep the user's activities list in sync.
+        await User.findByIdAndUpdate(req.user._id, { $pull: { activities: req.params.id } });
 
         res.status(200).json({message: "Post deleted successfully"});
     } catch (error) {

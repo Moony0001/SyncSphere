@@ -69,12 +69,12 @@ export default function Map({isRecording, distance, setDistance}) {
             userMarkerRef.current = L.marker([location.latitude, location.longitude], {icon: myIcon}).addTo(mapRef.current);
             mapRef.current.setView([location.latitude, location.longitude], 19);}
 
-            if (isRecording){
-                latlngs.current.push([location.latitude, location.longitude]);
-                polylineRef.current.setLatLngs(latlngs.current);
-            }
-        
-    }, [location, coordinates.latitude, coordinates.longitude, isRecording]);
+        // NOTE: recording the route points, drawing the polyline, and computing
+        // distance are ALL handled by the effect below. Previously this effect
+        // ALSO pushed the point while recording, so every GPS fix was added
+        // twice — the distance effect then measured the gap between a point and
+        // itself (~0), which is why distance never accumulated.
+    }, [location, coordinates.latitude, coordinates.longitude]);
 
     useEffect(() => {
         if (!isRecording || !location || location.latitude === 0 || location.longitude === 0) return;
@@ -113,6 +113,6 @@ export default function Map({isRecording, distance, setDistance}) {
     }, []);
 
     return (
-        <div id="map"></div>
+        <div id="map" className="h-full w-full" />
     )
 }

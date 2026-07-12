@@ -1,95 +1,65 @@
 import { useEffect, useState } from "react";
-import gift from '../../img/gift.png';
+import { Users } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 
-
-function Club({club}) {
-
-  const {data: authUser} = useQuery({queryKey: ["authUser"]});
+function Club({ club }) {
+  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
   const [membersCount, setMembersCount] = useState(club.members.length);
   const [inClub, setInClub] = useState(club.members.includes(authUser?._id));
 
-
-  const clubName = club.name;
-  const clubLocation = club.location;
-  const clubSport = club.sport;
-  const clubType = club.club_type;
-
   const queryClient = useQueryClient();
-  
-  const {mutate: joinClub, isPending: isJoining} = useMutation({
+
+  const { mutate: joinClub, isPending: isJoining } = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await fetch(`/api/clubs/join/${club._id}`, {
-          method: "POST",
-        });
-        const data = await res.json();
-        console.log(data);
-        if(!res.ok) {
-          throw new Error(data.error || "Failed to join club");
-        }
-        return data;
-      } catch (error) {
-        throw new Error(error.message)
-      }
+      const res = await fetch(`/api/clubs/join/${club._id}`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to join club");
+      return data;
     },
     onSuccess: (updatedMembers) => {
       setMembersCount(updatedMembers.length);
       setInClub(true);
-      queryClient.setQueryData(["clubs"], (oldData) =>
-        oldData.map((c) =>
-          c._id === club._id ? { ...c, members: updatedMembers } : c
-        )
-      );
-      queryClient.setQueryData(["authUser"], (oldAuthUser) => ({
-        ...oldAuthUser,
-        clubs: [...(oldAuthUser?.clubs || []), club._id],
-      }));
-      queryClient.invalidateQueries(["clubs"]); // Refetch all clubs
-      queryClient.invalidateQueries(["authUser"]); // Refetch authUser data
+      queryClient.invalidateQueries({ queryKey: ["clubs"] });
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
-    onError: () => {
-      toast.error(error.message);
-    }
+    onError: (error) => toast.error(error.message),
   });
-
-  const handleJoinClub = () => {
-    joinClub();
-  };
 
   useEffect(() => {
     setMembersCount(club.members.length);
- }, [club.members]);
- 
+  }, [club.members]);
 
   return (
-    <div className="club-card1">
-      <div className="club-info">
-        <div className="club-image">
-          <img src={gift} alt="Club Icon" />
-        </div>
-        <div className="club-details">
-          <p className="club-name">{clubName}</p>
-          <p className="club-location">{clubLocation}</p>
-          {!inClub && (
-            <button className="join-button" onClick={handleJoinClub} disabled={isJoining}>
-              {isJoining ? "Joining..." : "Join"}
-            </button>
+    <div className="card flex items-center justify-between gap-4 p-4">
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+          {club.logo ? (
+            <img src={club.logo} alt="Club" className="h-full w-full object-cover" />
+          ) : (
+            <Users className="h-6 w-6 text-gray-400" />
           )}
-          <span className="first">{membersCount}</span>
-          <span className="second">{clubSport}</span>
-          <span className="third">{clubType}</span>
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-brand">{club.name}</p>
+          <p className="truncate text-sm text-gray-500">{club.location}</p>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
+            <span>{membersCount} members</span>
+            <span>{club.sport}</span>
+            <span>{club.club_type}</span>
+          </div>
         </div>
       </div>
-      <div className="club-actions">
-        
-        <div className="club-stats">
-          <span>{membersCount}</span>
-          <span>{clubSport}</span>
-          <span>{clubType}</span>
-        </div>
+
+      <div className="shrink-0">
+        {inClub ? (
+          <span className="text-sm font-medium text-gray-400">Joined</span>
+        ) : (
+          <button onClick={() => joinClub()} disabled={isJoining} className="btn-primary">
+            {isJoining ? "Joining..." : "Join"}
+          </button>
+        )}
       </div>
     </div>
   );

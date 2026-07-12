@@ -19,3 +19,763 @@ polyline drawing function. also we will have to make sure the previous line does
 Clubs: Club event functionality
 
 The header is not wrapped in the header element, maybe that will fix the issue
+
+
+################################################################################
+#                                                                              #
+#   BACKEND TESTING SETUP — DETAILED WALKTHROUGH  (added 2026-07-12)           #
+#                                                                              #
+#   This section documents, step by step, everything that was done to add an  #
+#   automated test suite for the backend. It is written so you can read it     #
+#   later and understand BOTH what was done and WHY. Nothing here changes how  #
+#   the app runs (`npm run dev` still works exactly the same).                 #
+#                                                                              #
+################################################################################
+
+
+================================================================================
+0. THE GOAL AND THE MENTAL MODEL
+================================================================================
+
+We want "integration tests" for the backend. An integration test drives the
+real Express app end-to-end: it sends an HTTP request (like POST /api/auth/login)
+and checks the HTTP response AND the resulting database state. This catches far
+more real bugs than testing tiny functions in isolation.
+
+Three tools make this pleasant:
+
+  - vitest ................ the test RUNNER. Finds *.test.js files, runs them,
+                            prints pass/fail. Provides describe / it / expect.
+  - supertest ............. sends fake HTTP requests directly to the Express
+                            `app` object. No need to actually listen on a port.
+  - mongodb-memory-server . boots a REAL MongoDB that lives only in RAM, just
+                            for the duration of the tests. Your real database is
+                            never touched, and the data is wiped between tests.
+
+The flow of a single test:
+        supertest request  -->  Express app  -->  controllers  -->  in-RAM Mongo
+        then we `expect(...)` on the response and/or query the DB to verify.
+
+
+================================================================================
+1. TOOLS INSTALLED
+================================================================================
+
+Command run at the project root:
+
+    npm install -D vitest supertest mongodb-memory-server
+
+(-D means "dev dependency": needed for development/testing, not in production.)
+This added them under "devDependencies" in the root package.json. Node v20 and
+npm v10 were used.
+
+
+================================================================================
+2. STEP A — MAKING THE APP TESTABLE  (the app.js / server.js split)
+================================================================================
+
+THE PROBLEM: originally, backend/server.js did three things in one file:
+  (a) built the Express app and registered all routes,
+  (b) connected to the real MongoDB, and
+  (c) called app.listen(PORT) to start a live server.
+If a test file did `import ... from server.js`, it would immediately try to
+open port 5000 and connect to the real database. That is not what tests want.
+
+THE FIX (standard Node pattern): split "what the app IS" from "how we RUN it".
+
+  * NEW FILE  backend/app.js
+      - Builds the Express app, adds middleware (json, urlencoded, cookieParser)
+        and mounts all /api routes.
+      - Keeps the production block that serves the built frontend.
+      - Does NOT connect to a DB and does NOT call app.listen.
+      - Ends with:  export default app;
+      Tests import THIS file.
+
+  * REWRITTEN  backend/server.js  (now just the entry point)
+      - loads env (dotenv), imports app from ./app.js, connects to Mongo, and
+        calls app.listen(PORT). This is what `npm run dev` / `npm start` use.
+
+Why this is safe: the running app behaves identically. We only moved code
+between two files and added an `export`.
+
+
+================================================================================
+3. STEP B — CONFIG, TEST DB LIFECYCLE, HELPERS, SCRIPTS
+================================================================================
+
+  * NEW FILE  vitest.config.js  (project root)
+      Key options:
+        environment: "node"      -> backend code, no browser DOM needed
+        globals: true            -> describe/it/expect available globally
+        setupFiles: [...setup.js]-> run our setup before the tests
+        include: ["backend/tests/**/*.test.js"] -> only backend tests for now
+        hookTimeout: 60000       -> the FIRST run downloads a small mongod binary
+                                    which can take a while; don't time out.
+
+  * NEW FILE  backend/tests/setup.js  (the test database lifecycle)
+      - Sets process.env.JWT_SECRET so tokens sign/verify with a known secret.
+      - Sets process.env.NODE_ENV = "development"  (VERY IMPORTANT — see gotcha
+        #1 in section 5 below).
+      - beforeAll:  start MongoMemoryServer, connect mongoose to it.
+      - afterEach:  delete every document in every collection, so each test
+                    starts from a clean, empty database (test isolation).
+      - afterAll:   disconnect mongoose and stop the in-memory server.
+
+  * NEW FILE  backend/tests/helpers.js  (shared utilities so tests stay short)
+      - newUserPayload(overrides): builds a valid signup body with a UNIQUE
+        random email each call (so several users can be made in one test).
+      - registerAgent(overrides): signs up a user and returns a supertest
+        "agent". An agent is like a browser session: it stores the httpOnly
+        `jwt` cookie set at signup and automatically re-sends it on every later
+        request, which is how we call protected (logged-in) routes.
+        It returns { agent, user, payload }.
+      - createRawPost(userId, overrides): inserts a Post DIRECTLY via the
+        Mongoose model, filling every required field. We need this because the
+        createPost controller is currently broken (bug #2), so we can't create
+        posts through the API — but we still want posts to exist so we can test
+        liking / commenting / deleting them.
+
+  * EDITED  package.json  (root) — added two scripts:
+        "test":       "vitest run"   -> run once and exit (used in CI)
+        "test:watch": "vitest"       -> re-run automatically as you edit files
+
+
+================================================================================
+4. STEP C — THE TEST FILES (and how to READ a test)
+================================================================================
+
+Anatomy of a test (every test follows this shape):
+
+    describe("group name", () => {          // groups related tests
+      it("does something specific", async () => {
+        // 1. ARRANGE: set up data (e.g. register a user, create a club)
+        // 2. ACT:     make the request (await agent.post(...))
+        // 3. ASSERT:  expect(result).toBe(expected)
+      });
+    });
+
+Common matchers used:
+    expect(x).toBe(y)                exact equality (numbers, strings, booleans)
+    expect(x).toHaveProperty("_id")  object has a key
+    expect(arr).toHaveLength(1)      array length
+    expect(str).toMatch(/regex/i)    string matches a pattern
+    expect(x).not.toBe(y) / .not...  negation
+
+Files created (all under backend/tests/):
+    smoke.test.js         -> trivial 1+1===2 test, proves the runner works.
+    auth.test.js          -> signup / login / logout / getMe / protectRoute.
+    user.test.js          -> profile / follow+unfollow / suggested / update.
+    post.test.js          -> feed / create / myactivities / like / comment /
+                             delete / comments-schema.
+    club.test.js          -> create / get / search / join / leave / invite /
+                             delete (admin vs non-admin).
+    notification.test.js  -> list notifications / mark-as-read.
+
+Cookie/auth tip you can reuse: for logged-in routes, get an `agent` from
+registerAgent() and call agent.get/post(...). For testing the "not logged in"
+case, use a plain `request(app).get(...)` with no cookie and expect 401.
+
+
+================================================================================
+5. TWO GOTCHAS WE HIT (and how they were solved) — READ THIS, IT'S USEFUL
+================================================================================
+
+GOTCHA #1 — Every logged-in test returned 401 Unauthorized.
+    CAUSE: generateToken.js sets the cookie with
+              secure: process.env.NODE_ENV !== "development"
+           A "Secure" cookie is only ever sent back over HTTPS. Supertest talks
+           plain HTTP, so its cookie jar silently refused to send the cookie
+           back, and protectRoute saw "no token" -> 401 on everything.
+    FIX:   In setup.js we set NODE_ENV = "development" so the cookie is not
+           marked Secure during tests, and auth works over HTTP.
+    LESSON: cookie flags (Secure, SameSite, httpOnly) directly affect testing.
+
+GOTCHA #2 — One test crashed the whole run with an "Unhandled Rejection".
+    CAUSE: signup() has a missing `return` on the "Email already taken" branch
+           (this is real bug #7). After sending the 400 it keeps running and
+           calls res.cookie(...), which throws
+              "Cannot set headers after they are sent to the client"
+           OUTSIDE the normal request flow, poisoning the whole test run.
+    FIX:   We deliberately do NOT drive a duplicate signup from the tests. Bug
+           #7 is documented as a comment in auth.test.js with the exact test to
+           add once the `return` is put back. (You can't cleanly test a handler
+           that crashes the process; fix the handler first, then test it.)
+    LESSON: some bugs must be FIXED before they can be tested — that's fine.
+
+
+================================================================================
+6. HOW TO RUN THE TESTS AND READ THE RESULTS
+================================================================================
+
+    npm test            # run once
+    npm run test:watch  # keep running, re-run on file save
+    npx vitest run --reporter=verbose   # list every individual test
+
+The FIRST run is slower because mongodb-memory-server downloads its mongod
+binary once and caches it. Later runs are fast (~2-3 seconds total here).
+
+Current result:
+        Test Files  6 passed (6)
+        Tests       32 passed | 10 expected fail (42)
+
+"32 passed" = features that currently WORK (login, follow, clubs, notifications,
+guards, etc.). "10 expected fail" = the known bugs, encoded on purpose (next
+section). Zero unexpected failures, zero errors.
+
+
+================================================================================
+7. WHAT "it.fails" MEANS AND THE BUGS THE TESTS ENCODE
+================================================================================
+
+vitest has `it.fails(name, fn)`. It marks a test that is EXPECTED to fail: it
+counts as GREEN while the code is still broken, and it turns RED (alerting you)
+the moment the bug is fixed and the test starts passing. This is a clean way to
+turn the bug report into an executable checklist:
+
+  - When you fix a bug, its `it.fails` test will start "failing" (because it now
+    passes). That's your signal to change `it.fails` -> `it`. Green again = bug
+    fixed AND covered by a real test.
+
+The 10 known bugs currently encoded as `it.fails` (each has a "KNOWN BUG #n"
+label in the test name so it's easy to find):
+
+  #2  post.test.js  createPost returns 500 — Post model requires
+                    title/sport/time/distance but the controller never sets them
+                    (proof in the run's log: "Post validation failed: distance /
+                    time / sport / title is required").
+  #3  post.test.js  getMyActivities uses User.findOne({ userId }) (a field that
+                    doesn't exist) instead of findById -> always 404.
+  #4  post.test.js  getUserPosts looks up User.findOne({ username }) but there's
+                    no username field on User -> always 404.
+  #5  post.test.js  commentOnPost reads req.params._id but the route param is
+                    :id -> postId undefined -> 404.
+  #6  post.test.js  deletePost also reads req.params._id (-> 404), and has a
+                    ".pop" that is missing its "()" call.
+  #8  post.test.js  likePost builds a Notification with icon = userId.profileImg
+                    (undefined, because userId is an ObjectId); icon is required
+                    -> save throws -> 500 (proof: "Notification validation
+                    failed: icon is required").
+  #10 post.test.js  the Post `comments` schema is written as [{ type: String,
+                    user }], so Mongoose treats comments as an array of Strings
+                    and drops each comment's `text`.
+  #9  club.test.js  inviteUser builds a Notification but never calls .save(), so
+                    no invite notification is persisted.
+  #13 club.test.js  club search filters on a `scope` field that doesn't exist
+                    (the real field is `club_type`) -> club-type filter never
+                    matches.
+  (+) club.test.js  joinClub returns `club.members` captured BEFORE the update,
+                    so the response never includes the member who just joined
+                    (the DB is correct; only the RESPONSE is stale). This one was
+                    found WHILE writing the tests — a nice example of tests
+                    surfacing bugs the eye missed.
+
+Note: bug #7 (missing return in signup) is documented but NOT encoded as a live
+test, for the reason in gotcha #2.
+
+
+================================================================================
+8. FILES ADDED / CHANGED IN THIS SESSION (quick reference)
+================================================================================
+
+  ADDED:
+    backend/app.js                     (exports the Express app)
+    vitest.config.js
+    backend/tests/setup.js
+    backend/tests/helpers.js
+    backend/tests/smoke.test.js
+    backend/tests/auth.test.js
+    backend/tests/user.test.js
+    backend/tests/post.test.js
+    backend/tests/club.test.js
+    backend/tests/notification.test.js
+  CHANGED:
+    backend/server.js                  (slimmed to entry-point only)
+    package.json                       (added test scripts + dev deps)
+
+
+================================================================================
+9. NEXT STEPS / HOW TO EXTEND
+================================================================================
+
+  - Fixing the bugs: fix a controller, flip its `it.fails` to `it`, run
+    `npm test`, watch it go green. Do them one at a time.
+  - More coverage: editClub, leaveClub edge cases, unauthorized access to each
+    protected route, invalid ObjectId inputs (these currently 500 via CastError
+    and could be handled more gracefully).
+  - Frontend tests (later): would use Vitest + React Testing Library +
+    jsdom (a fake browser DOM). That's a separate setup from this backend one.
+  - CI: `npm test` exits non-zero on failure, so it can be wired into GitHub
+    Actions to run on every push.
+
+--------------------------- end of testing section -----------------------------
+
+
+################################################################################
+#                                                                              #
+#   BUG FIXES — DETAILED LOG  (added 2026-07-12)                               #
+#                                                                              #
+#   For every bug: WHAT it was, WHAT it caused, HOW it was fixed, and (where   #
+#   relevant) which test now proves the fix. The workflow was: fix the code -> #
+#   flip that bug's `it.fails` test to a normal `it` -> run `npm test` and     #
+#   watch it stay green. Final result after all fixes:                         #
+#                                                                              #
+#        Test Files  6 passed (6)                                              #
+#        Tests       46 passed (46)      <-- was 32 passed / 10 known-fail     #
+#                                                                              #
+#   The backend is fully covered by tests. The frontend fixes below are the    #
+#   FUNCTIONAL (logic) bugs only — the visual/CSS overhaul is a separate task  #
+#   still awaiting the go-ahead, so those items are listed as "deferred".      #
+#                                                                              #
+################################################################################
+
+
+================================================================================
+A. BACKEND — MODELS
+================================================================================
+
+BUG #10 — Post `comments` schema was malformed
+  File:    backend/models/post.model.js
+  WHAT:    comments was declared as  [{ type: String, user: {...} }]. When
+           Mongoose sees `type: String` at that level it treats each comment as
+           a plain STRING and ignores the sibling `user` definition.
+  CAUSED:  A comment's `text` had nowhere to live — saving {user, text} either
+           lost the text or errored. Comments were effectively broken.
+  FIX:     Declared each comment as a proper sub-document:
+               [{ text: {type:String, required:true},
+                  user: {type:ObjectId, ref:"User", required:true} }]
+  TEST:    post.test.js -> "persists a comment's text field".
+
+BUG #11 — User schema timestamps typo
+  File:    backend/models/user.model.js
+  WHAT:    Schema option was `{ timeStamps: true }` (capital S). The real option
+           is `timestamps`. The typo was silently ignored.
+  CAUSED:  User documents never got createdAt / updatedAt fields.
+  FIX:     Corrected to `{ timestamps: true }`.
+
+
+================================================================================
+B. BACKEND — AUTH CONTROLLER  (backend/controllers/auth.controllers.js)
+================================================================================
+
+BUG #7 — signup: missing `return` on the "email already taken" branch
+  WHAT:    The duplicate-email check sent a 400 response but did NOT return, so
+           the function kept executing.
+  CAUSED:  After the 400 was already flushed, the code went on to hash the
+           password and call res.cookie(...), which throws
+           "Cannot set headers after they are sent to the client" (an unhandled
+           crash), with a possible duplicate write depending on index timing.
+           (This is the exact crash that had made it untestable earlier.)
+  FIX:     Added `return` before the 400 response.
+  TEST:    auth.test.js -> "rejects a duplicate email with 400 and creates no
+           second user" (this test could only be added AFTER the fix).
+
+BUG #15 — login response omitted `gender`
+  WHAT:    The login JSON response left out the user's gender (signup included
+           it), an inconsistency the client could trip over.
+  FIX:     Added `gender: user.gender` to the login response object.
+
+
+================================================================================
+C. BACKEND — POST CONTROLLER  (backend/controllers/post.controllers.js)
+================================================================================
+
+BUG #2 — createPost could never succeed  (+ #12 activities never populated)
+  WHAT:    The Post model requires title/sport/time/distance, but createPost
+           only set user/text/img.
+  CAUSED:  Every createPost call failed schema validation -> 500. Creating an
+           activity was impossible. Separately (#12), user.activities was never
+           written to, so the profile "Activities" count was always 0.
+  FIX:     createPost now reads title/sport/time/distance/route from the body,
+           validates they are present (400 if not), and saves them. On success
+           it also does $push of the new post id into user.activities so the
+           profile count stays correct. deletePost does the matching $pull.
+  TEST:    post.test.js -> "creates an activity post and returns 201" (also
+           checks the activities list) and "rejects a post missing required
+           activity fields with 400".
+
+BUG #3 — getMyActivities always 404'd
+  WHAT:    Used `User.findOne({ userId })` — a query on a nonexistent field
+           `userId` — instead of looking the user up by id.
+  CAUSED:  The query returned null -> "User not found" 404 every time.
+  FIX:     Removed the bogus lookup; the authenticated user's id (req.user._id,
+           set by protectRoute) is used directly in Post.find({ user: userId }).
+  TEST:    post.test.js -> "returns the current user's own posts".
+
+BUG #4 — getUserPosts always 404'd
+  WHAT:    Used `User.findOne({ username })` but the User model has no username.
+  CAUSED:  Always null -> 404.
+  FIX:     Look the user up by id (findById). Also renamed the route param from
+           /user/:username to /user/:id (backend/routes/post.routes.js) so the
+           param name matches. (Verified nothing in the frontend calls this.)
+  TEST:    post.test.js -> "returns a given user's posts".
+
+BUG #8 — likePost crashed while building the notification
+  WHAT:    The kudos Notification set icon = userId.profileImg and text from
+           userId.firstname/lastname, but `userId` is an ObjectId, so those were
+           all undefined. `icon` is a required field.
+  CAUSED:  Notification.save() failed validation ("icon is required") -> 500,
+           even though the like had already been applied. Inconsistent state.
+  FIX:     Build the notification from req.user (the real, password-stripped user
+           doc from protectRoute), with a safe fallback: icon: req.user.profileImg
+           || "placeholder".
+  TEST:    post.test.js -> "likes another user's post and returns 200 ...".
+
+BUG #5 — commentOnPost always 404'd (+ broken notification)
+  WHAT:    Read `req.params._id` but the route param is `:id`, so the post id was
+           undefined. The notification also used the ObjectId-as-user mistake.
+  CAUSED:  findById(undefined) -> null -> 404 on every comment attempt.
+  FIX:     Use req.params.id, and build the notification from req.user with the
+           icon fallback (same pattern as #8).
+  TEST:    post.test.js -> "adds a comment and returns the post with the comment
+           text" (also exercises the #10 schema fix).
+
+BUG #6 — deletePost always 404'd (+ a crash even past that)
+  WHAT:    Read `req.params._id` (undefined -> 404). Additionally it had
+           `post.img.split("/").pop.split(".")[0]` — `.pop` without `()`, which
+           references the function instead of calling it and would throw.
+  CAUSED:  Deleting a post always 404'd; and for posts with an image it would
+           have thrown a TypeError.
+  FIX:     Use req.params.id for both findById and findByIdAndDelete, and call
+           .pop() properly. Also $pull the id from user.activities.
+  TEST:    post.test.js -> "deletes your own post and returns 200" and "does not
+           let you delete someone else's post (401)".
+
+
+================================================================================
+D. BACKEND — CLUB CONTROLLER  (backend/controllers/club.controllers.js)
+================================================================================
+
+BUG #9 — inviteUser never delivered an invite (two layers)
+  WHAT:    (a) `Notification` was never imported into this file, yet inviteUser
+           did `new Notification(...)`; (b) even setting that aside, it never
+           called .save() on the notification.
+  CAUSED:  (a) meant a ReferenceError -> 500 whenever invite was called; (b)
+           meant that even if constructed, nothing was persisted. Club invites
+           simply did not work.
+  FIX:     Added `import Notification from "../models/notification.model.js"`,
+           added `await newNotification.save()`, and gave icon a fallback
+           (club.logo || "placeholder") since club.logo defaults to "" which a
+           required String field rejects.
+  TEST:    club.test.js -> "persists a club-invite notification".
+
+BUG #13 — club search "club type" filter matched nothing
+  WHAT:    searchClubs did `query.scope = scope`, but the Club model has no
+           `scope` field (the real field is `club_type`).
+  CAUSED:  Filtering by club type returned an empty list regardless of input.
+  FIX:     Map the incoming `scope` query param onto club_type:
+           `if (scope && scope !== "All") query.club_type = scope;`
+  NOTE:    The FRONTEND still sends club-type values "Public"/"Private" which do
+           not match the club_type enum (Club / Racing Team / ...). That UI
+           mismatch is part of the deferred frontend work.
+  TEST:    club.test.js -> "filters clubs by club type".
+
+BUG (found while testing) — joinClub returned a STALE member list + allowed dupes
+  WHAT:    It captured `const updatedMembers = club.members` from the doc fetched
+           BEFORE the $push, so the response never included the new member. It
+           also used $push with no guard, allowing duplicate membership.
+  CAUSED:  The client (Club.jsx setMembersCount) got a stale count after joining;
+           repeated joins could list a user multiple times.
+  FIX:     Guard against already-being-a-member (400), use $addToSet (no dupes)
+           with { new: true } so the UPDATED members array is returned.
+  TEST:    club.test.js -> "returns the updated member list including the new
+           member" and "rejects joining a club you are already in (400)".
+
+
+================================================================================
+E. BACKEND — INFRASTRUCTURE
+================================================================================
+
+BUG #1 — Cloudinary was never configured
+  Files:   backend/server.js
+  WHAT:    Controllers call cloudinary.uploader.upload/destroy, but nowhere did
+           the app call cloudinary.config({...}) with the API credentials.
+  CAUSED:  Every image upload/delete (profile pic, club logo/cover, post image)
+           threw "Must supply api_key". All media features were dead.
+  FIX:     Configure the shared cloudinary singleton once at startup in
+           server.js (after dotenv.config()), reading CLOUDINARY_CLOUD_NAME /
+           _API_KEY / _API_SECRET from env. Because cloudinary is a singleton,
+           every controller now uses the configured instance.
+  NOTE:    Not covered by an automated test (would require real Cloudinary
+           credentials / network). Verify manually by uploading an image once
+           real keys are in .env.
+
+
+================================================================================
+F. FRONTEND — FUNCTIONAL (LOGIC) FIXES
+   (the visual/CSS overhaul is still a separate, pending task)
+================================================================================
+
+BUG #17 — Activity distance never accumulated ("distance doesn't work")
+  File:    frontend/src/components/common/Map.jsx
+  WHAT:    Two useEffects both reacted to a new GPS location while recording, and
+           BOTH pushed the point into latlngs and redrew the polyline. So each
+           GPS fix was appended twice.
+  CAUSED:  The distance effect computed the Haversine gap between "the new point"
+           and "the last point in latlngs" — but the other effect had just
+           pushed that SAME point, so the gap was ~0. Distance stayed at 0.
+  FIX:     Removed the point-pushing / polyline-drawing from the FIRST effect
+           (it now only moves the user marker and recenters the map). The second
+           effect is now the single owner of recording: it measures distance
+           against the true previous point, then pushes the new point once.
+  NOTE:    Not covered by an automated test yet (frontend test setup — Vitest +
+           React Testing Library + jsdom — is a future task). Verify by
+           recording a short walk and watching the km value climb.
+
+BUG #16 — Geolocation error handler referenced an undefined variable
+  File:    frontend/src/hooks/useGeoLocation.jsx
+  WHAT:    In onError(error) it called `setError(err.message ...)` — `err` does
+           not exist; the parameter is named `error`.
+  CAUSED:  If the browser denied/loss GPS, the handler itself threw a
+           ReferenceError instead of surfacing a clean error message.
+  FIX:     Changed `err.message` to `error.message`.
+
+BUG #18 — `toast` used but not wired up (two spots)
+  Files:   frontend/src/components/common/Header.jsx
+           frontend/src/pages/clubs/Club.jsx
+  WHAT:    (a) Header's logout onError called toast.error(...) but never imported
+           toast. (b) Club's mutation onError did `() => toast.error(error.message)`
+           with no `error` parameter (toast itself was imported there).
+  CAUSED:  On the error path, both would throw ReferenceError instead of showing
+           the intended toast.
+  FIX:     (a) Added `import toast from "react-hot-toast"` in Header.jsx.
+           (b) Changed Club.jsx onError to `(error) => toast.error(error.message)`.
+
+BUG #19 — Signup name inputs bound to the wrong state keys
+  File:    frontend/src/pages/auth/signup/SignUp.jsx
+  WHAT:    The inputs had value={formData.firstName} / value={formData.lastName}
+           (camelCase), but the state keys are firstname / lastname (lowercase).
+  CAUSED:  The value binding was always `undefined`, making those inputs
+           uncontrolled (React warning; state/UI mismatch). It only "worked" by
+           accident because onChange keys off e.target.name.
+  FIX:     Bound them to formData.firstname / formData.lastname.
+
+
+================================================================================
+G. DEFERRED — will be handled with the frontend overhaul (NOT fixed yet)
+================================================================================
+
+These are known but intentionally left for the visual/UX rework, because fixing
+them properly means touching layout/markup/CSS:
+
+  - LoadingSpinner uses DaisyUI classes ("loading loading-spinner") that aren't
+    installed, so the spinner is invisible.
+  - Footer is still branded "Strava" with broken image paths.
+  - Post/OnlyMap/Profile/Social/Stats are hardcoded mockups, not wired to data.
+  - ProfilePage "Follow" button has no onClick (useFollow is imported but the
+    button is inert).
+  - Club.jsx queryClient.setQueryData(["clubs"], ...) key doesn't match the list
+    query key ["clubs", queryParams], so the optimistic update is a no-op (the
+    invalidateQueries still refetches, so it's not fatal).
+  - The club-type dropdown sends "Public"/"Private", which don't match the
+    club_type enum (pairs with backend #13 note above).
+  - App.css (~2000 lines) with !important, translate/scale hacks, fixed pixel
+    widths, and @media (max-width:10000000000px) — the root of the "wonky" look.
+
+
+================================================================================
+H. TEST-SUITE CHANGES MADE ALONGSIDE THE FIXES
+================================================================================
+
+  - Flipped every fixed bug's `it.fails(...)` back to a normal `it(...)` and, in
+    most cases, strengthened the assertions (e.g. checking the returned likes
+    array, the persisted comment text, the activities sync, the updated member
+    list).
+  - Added new tests: duplicate-email signup (#7), missing-required-fields on
+    createPost, delete-someone-else's-post 401, already-a-member 400.
+  - Added `import User` to post.test.js for the activities-sync assertion.
+  - Ran `npm test` from the PROJECT ROOT (note: the shell's working directory
+    persists between commands — running it from frontend/ gives "Missing script:
+    test" because that's a different package.json).
+  - Final: 46 passed, 0 failures.
+
+--------------------------- end of bug-fix section -----------------------------
+
+
+################################################################################
+#                                                                              #
+#   FRONTEND OVERHAUL — HAND-CSS  ->  FULL TAILWIND  (added 2026-07-12)        #
+#                                                                              #
+#   Goal set by the user: KEEP the Strava-like look, but rebuild the styling   #
+#   in full Tailwind and retire the ~2000-line hand-written App.css. This      #
+#   section documents the approach, the design system, what changed in each    #
+#   area, the extra bugs fixed along the way, and how it was verified.         #
+#                                                                              #
+################################################################################
+
+
+================================================================================
+0. APPROACH & HOW IT WAS VERIFIED
+================================================================================
+
+  - Installed the frontend deps (npm install in /frontend) so the project could
+    be built. NOTE: the earlier "Cannot find @vitejs/plugin-react" error was a
+    red herring — it happened because the shell's working directory had been
+    left in the project ROOT; running the build from /frontend works. (The deps
+    were actually already present.)
+  - Verified continuously with `npm run build` (run from the frontend folder).
+    Vite/Rollup resolves every import and compiles all JSX, so a bad import
+    (e.g. a mis-typed lucide icon name) or a syntax error FAILS the build. A
+    green build therefore proves the whole app compiles.
+  - What a build canNOT prove is pixel-perfect appearance or pure runtime logic.
+    So: please run `npm run dev` (frontend) + `npm run dev` (backend) and click
+    through to eyeball it. Everything below was written to reproduce the
+    original layout faithfully while looking cleaner and being responsive.
+  - Bundle win: CSS went from ~30 KB (App.css + Tailwind) down to ~22 KB of
+    purged Tailwind (gzip ~4.7 KB), and the two huge auth side-images
+    (left.png 838 KB + right.png 611 KB) are no longer bundled at all.
+
+
+================================================================================
+1. THE DESIGN SYSTEM (foundation)
+================================================================================
+
+  frontend/tailwind.config.js  (rewritten)
+    - Replaced the unused shadcn-style `hsl(var(--...))` colour tokens (those
+      CSS variables were never defined, so those utilities did nothing) with a
+      real palette:
+          brand:        #1177FF   (the original SyncSphere blue — kept)
+          brand.dark:   #0E63D6   (hover)
+          brand.light:  #4DA6FF
+    - Added Inter/system font stack, a `max-w-container` (1280px), and a soft
+      `shadow-card`.
+
+  frontend/src/index.css  (rewritten)
+    - Kept the three @tailwind directives.
+    - @layer base: page background (gray-50), default text colour, font.
+    - @layer components: a small set of reusable classes so the JSX stays DRY
+      and consistent:
+          .btn-primary / .btn-outline / .btn-danger   (buttons)
+          .card                                         (white rounded surface)
+          .input                                        (form fields)
+          .section-title                                (small uppercase labels)
+    - Kept ONE non-Tailwind rule: `#map { height:100%; width:100% }`, because
+      Leaflet needs its container sized before it initialises.
+
+  frontend/src/App.jsx
+    - Removed `import './App.css'`. Nothing else imports it, so App.css was
+      DELETED.
+
+
+================================================================================
+2. WHAT CHANGED, AREA BY AREA
+================================================================================
+
+  SHARED
+    Header.jsx      Rebuilt as a clean sticky top-nav. Swapped the low-res PNG
+                    icons for lucide-react icons (Search, Bell, Menu, User,
+                    ChevronDown). Dropdowns now use a CSS group-hover pattern
+                    instead of extra useState. Passes authUser + a working
+                    logout down to the mobile menu.
+    Footer.jsx      Rebuilt: real responsive column grid, lucide social icons,
+                    correct SyncSphere branding (was "Strava"), and the broken
+                    appstore.png/googleplay.png images removed.
+    LoadingSpinner  Now a real animated Tailwind spinner (was invisible because
+                    it used DaisyUI classes that aren't installed — deferred
+                    item #23, now fixed).
+    SearchFilter    Restyled; lucide Search/X icons.
+    SideBarMenu     Rebuilt as a proper right-side drawer with a backdrop, and
+                    the logout button actually works now (Header wires it).
+
+  DASHBOARD (home)
+    HomePage/Holder Responsive 3-column CSS grid
+                    (lg:grid-cols-[260px_1fr_300px]); side columns hide on
+                    mobile. Replaces the old fixed-width / translate-hack layout.
+    UserProfile     Clean profile card. Also hardened the optional chaining
+                    (authUser?.following?.length) so it can't throw.
+    Middle          "Getting Started" card.
+    NoClub / Friends / Post   Restyled as cards; lucide icons; Friends keeps its
+                    real data + follow button.
+
+  AUTH
+    Login / SignUp  Redesigned as a centred card over the hero background image
+                    (dropped the two huge side images). SignUp now also
+                    invalidates the authUser query on success, so creating an
+                    account logs you straight in (it sets the cookie already).
+
+  CLUBS
+    ClubHeader      Rebuilt search UI with native <select>s (removed the custom
+                    dropdowns + click-outside code). IMPORTANT: the club-type
+                    options are now the REAL club_type values
+                    (Club / Racing Team / Company/Workplace / Shop) instead of
+                    "Public/Private", so combined with backend fix #13 the
+                    club-type filter now works end-to-end.
+    Club            Restyled card. Removed the fragile
+                    queryClient.setQueryData(["clubs"], ...) whose key never
+                    matched the list query (deferred item) — it now just
+                    invalidates.
+
+  PROFILE
+    ProfilePage     Rebuilt 3-column layout. The Follow button is now WIRED
+                    (onClick -> follow(user._id), label toggles Follow/Following)
+                    — it was previously inert (deferred item, now fixed). Query
+                    is keyed by id (["userProfile", id]) so it refetches cleanly.
+    Stats           Restyled comparison table (data-driven, Tailwind table).
+
+  ACTIVITY (record)
+    RecordActivity  Full-screen map with the controls as a floating bottom
+                    sheet, and the save form as a modal.
+    Map1/Map2/Map3  Restyled control panels (sport picker, timer, distance,
+                    start/pause/resume/finish). Also fixed a small bug: Map3's
+                    FINISH now sets third:false (it used to leave the paused
+                    panel mounted under the form).
+    Form            Restyled AND WIRED UP: "Save" now actually POSTs to
+                    /api/post/create (title/text/sport/time/distance, plus the
+                    image as base64 if one was chosen), shows a toast, and
+                    navigates home. Previously it only did alert("Form saved!").
+                    This completes the record-activity flow end-to-end.
+
+
+================================================================================
+3. EXTRA BUGS FIXED DURING THE OVERHAUL (previously "deferred")
+================================================================================
+
+  - LoadingSpinner was invisible (DaisyUI classes) -> real Tailwind spinner.
+  - Footer branding "Strava" + broken store images -> fixed / removed.
+  - ProfilePage Follow button had no onClick -> now wired to useFollow.
+  - Club.jsx cache key mismatch (setQueryData(["clubs"]) vs the real
+    ["clubs", queryParams]) -> removed; relies on invalidateQueries.
+  - Club-type dropdown sent "Public"/"Private" (never matched the enum) -> now
+    sends real club_type values; pairs with backend #13.
+  - Map3 FINISH left the previous panel mounted -> sets third:false.
+  - Record-activity "Save" did nothing -> now creates the post via the API.
+
+
+================================================================================
+4. DEAD / LEGACY FILES LEFT IN PLACE (not rendered anywhere)
+================================================================================
+
+  These components are not imported by any live screen (verified by grep). They
+  still contain old App.css class names, but since App.css is gone they'd just
+  render unstyled IF they were ever used. Left untouched to avoid deleting
+  things without an explicit ask — safe to delete later:
+      src/components/Profile.jsx
+      src/components/Social.jsx
+      src/components/OnlyMap.jsx
+  (App.jsx also still imports a couple of now-unused symbols — harmless.)
+
+
+================================================================================
+5. FILES CHANGED IN THE OVERHAUL (quick reference)
+================================================================================
+
+  CONFIG/FOUNDATION:
+    frontend/tailwind.config.js   (rewritten)
+    frontend/src/index.css        (rewritten)
+    frontend/src/App.jsx          (dropped App.css import)
+    frontend/src/App.css          (DELETED)
+
+  COMPONENTS/PAGES (rewritten to Tailwind):
+    components/common/Header.jsx, Footer.jsx, LoadingSpinner.jsx, Post.jsx
+    components/SearchFilter.jsx, SideBarMenu.jsx, Holder.jsx, UserProfile.jsx,
+    components/Middle.jsx, NoClub.jsx, Friends.jsx, Stats.jsx
+    pages/home/HomePage.jsx
+    pages/auth/login/Login.jsx, pages/auth/signup/SignUp.jsx
+    pages/clubs/ClubContainer.jsx, ClubHeader.jsx, Club.jsx
+    pages/userprofile/ProfilePage.jsx
+    pages/activity/RecordActivity.jsx, Map1.jsx, Map2.jsx, Map3.jsx, Form.jsx
+    components/common/Map.jsx  (only the container div got h-full/w-full;
+                                the distance-fix logic from earlier is untouched)
+
+  Verified with: `npm run build` (from /frontend) -> success, CSS ~22 KB.
+
+------------------------- end of frontend-overhaul section ----------------------

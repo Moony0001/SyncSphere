@@ -1,43 +1,27 @@
-import express from "express";
 import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
-import {v2 as cloudinary} from "cloudinary";
-import path from "path";
-
-import connectMongoDB from "./db/connectMongoDB.js";
-
-import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/user.routes.js";
-import postRoutes from "./routes/post.routes.js";
-import notificationRoutes from "./routes/notification.routes.js";
-import clubRoutes from "./routes/club.routes.js";
-
 dotenv.config();
 
-const app = express();
+import { v2 as cloudinary } from "cloudinary";
+
+import app from "./app.js";
+import connectMongoDB from "./db/connectMongoDB.js";
+
+// Configure the shared Cloudinary singleton once at startup. Every controller
+// that calls cloudinary.uploader.* uses this same configured instance, so image
+// uploads/deletes now have the credentials they need.
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// server.js is now ONLY the entry point: load env, connect to the real
+// database, and start listening. The app itself lives in app.js so it can be
+// imported by tests without a live server or a real database.
+
 const PORT = process.env.PORT || 5000;
-const __dirname = path.resolve();
 
-
-app.use(express.json());
-app.use(express.urlencoded({extended: true})); //extended: true allows to parse extended bodies with rich data in it
-app.use(cookieParser());
-
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/post", postRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/clubs", clubRoutes);
-
-if(process.env.NODE_ENV === "production"){
-    app.use(express.static(path.join(__dirname, "/frontend/dist")));    //This is to serve the static files in the frontend folder
-
-    app.get("*", (req, res) => {
-        res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
-    })
-}
-
-app.listen(PORT, ()=>{
-    console.log(`Server is up and running on port ${PORT}`);
-    connectMongoDB();
-})
+app.listen(PORT, () => {
+  console.log(`Server is up and running on port ${PORT}`);
+  connectMongoDB();
+});

@@ -2,6 +2,7 @@ import {v2 as cloudinary} from 'cloudinary';
 
 import Club from '../models/club.model.js';
 import User from '../models/user.model.js';
+import Notification from '../models/notification.model.js';
 
 export const getClubs = async (req, res) => {
     try {
@@ -38,7 +39,8 @@ export const searchClubs = async (req, res) => {
         if (clubname) query.name = { $regex: clubname, $options: "i" }; // Case-insensitive regex
         if (location) query.location = { $regex: location, $options: "i" };
         if (sport && sport !== "All") query.sport = sport;
-        if (scope && scope !== "All") query.scope = scope;
+        // The client sends the club-type filter as `scope`; the real field is `club_type`.
+        if (scope && scope !== "All") query.club_type = scope;
 
         // If no filters are provided, return an empty array
         if (Object.keys(query).length === 0) {
@@ -83,10 +85,20 @@ export const joinClub = async (req, res) => {
             return res.status(404).json({error: "User not found"});
         }
         
-        await Club.findByIdAndUpdate(id, { $push: { members: req.user._id } });
-        await User.findByIdAndUpdate(req.user._id, { $push: { clubs: id } });
-        const updatedMembers = club.members;
-        res.status(200).json(updatedMembers);
+        if(club.members.includes(req.user._id)){
+            return res.status(400).json({error: "You are already a member of this club"});
+        }
+
+        // $addToSet avoids duplicate membership; {new: true} returns the UPDATED doc
+        // so the response reflects the member who just joined.
+        const updatedClub = await Club.findByIdAndUpdate(
+            id,
+            { $addToSet: { members: req.user._id } },
+            { new: true }
+        );
+        await User.findByIdAndUpdate(req.user._id, { $addToSet: { clubs: id } });
+
+        res.status(200).json(updatedClub.members);
 
     } catch (error) {
         console.log("Error in joinClub controller: ", error.message);
@@ -130,7 +142,7 @@ export const inviteUser = async(req, res) => {
         }
         const newNotification = new Notification({
             to: userId,
-            icon: club.logo,
+            icon: club.logo || "placeholder",
             title: "Club Invitation",
             text: `You have been invited to join ${club.name}`,
             actionable_link: `/clubs/${clubId}`,
@@ -138,6 +150,7 @@ export const inviteUser = async(req, res) => {
             category: "club_invite",
             read: false
         });
+        await newNotification.save();
         res.status(200).json({message: "User invited to club successfully"});
     } catch (error) {
         console.log("Error in inviteUser controller: ", error.message);

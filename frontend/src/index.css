@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   SyncSphere design system (Tailwind). Reproduces the original Strava-like
+   look with a consistent brand blue, card surfaces, and reusable components.
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-gray-50 text-gray-800 font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-brand bg-white px-4 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600;
+  }
+
+  /* Surfaces */
+  .card {
+    @apply rounded-xl border border-gray-200 bg-white shadow-card;
+  }
+
+  /* Forms */
+  .input {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30;
+  }
+
+  /* Typography helpers */
+  .section-title {
+    @apply text-xs font-bold uppercase tracking-wide text-gray-400;
+  }
+}
+
+/* Leaflet map container needs an explicit size before it initialises. */
+#map {
+  height: 100%;
+  width: 100%;
+}

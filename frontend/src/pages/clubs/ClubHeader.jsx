@@ -1,180 +1,132 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import gift from '../../img/gift.png'
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import Club from "./Club";
 
+const SPORTS = ["All", "Cycling", "Running"];
+// These match the Club model's club_type enum, so the filter works end-to-end.
+const CLUB_TYPES = ["All", "Club", "Racing Team", "Company/Workplace", "Shop"];
 
 const ClubHeader = () => {
-  const {data: authUser} = useQuery({queryKey: ["authUser"]});
+  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedClubType, setSelectedClubType] = useState("All");
-  const [isSportDropdownOpen, setIsSportDropdownOpen] = useState(false);
-  const [isClubTypeDropdownOpen, setIsClubTypeDropdownOpen] = useState(false);
-  const [hasClubs, setHasClubs] = useState(false); // Toggle to false if no clubs are available
   const [isSearchTriggered, setIsSearchTriggered] = useState(false);
+  const [formData, setFormData] = useState({ clubName: "", location: "" });
 
-  const sportDropdownRef = useRef(null);
-  const clubTypeDropdownRef = useRef(null);
-
-  const handleSportSelect = (sport) => {
-    setSelectedSport(sport);
-    setIsSportDropdownOpen(false);
-  };
-
-  const handleClubTypeSelect = (clubType) => {
-    setSelectedClubType(clubType);
-    setIsClubTypeDropdownOpen(false);
-  };
-
-  useEffect(() => {
-    if (authUser?.clubs?.length) {
-      setHasClubs(true);
-    } else {
-      setHasClubs(false);
-    }
-  }, [authUser]);  
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sportDropdownRef.current && !sportDropdownRef.current.contains(event.target)) {
-        setIsSportDropdownOpen(false);
-      }
-      if (clubTypeDropdownRef.current && !clubTypeDropdownRef.current.contains(event.target)) {
-        setIsClubTypeDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const [formData, setFormData] = useState({
-    clubName: "",
-    location: "",
-  });
-
-  const handleInputChange = (e) => {
+  const handleInputChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
     if (formData.clubName) params.append("clubname", formData.clubName);
     if (formData.location) params.append("location", formData.location);
-    if (selectedSport !== "All") params.append("sport", selectedSport);  
+    if (selectedSport !== "All") params.append("sport", selectedSport);
     if (selectedClubType !== "All") params.append("scope", selectedClubType);
     return params.toString();
-  }, [formData, selectedSport, selectedClubType]);  
+  }, [formData, selectedSport, selectedClubType]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSearchTriggered(true);
-    refetch();
-  };
-
-  const {data: clubs, isLoading, refetch, isRefetching} = useQuery({
-    queryKey: ["clubs", queryParams.toString()],
+  const { data: clubs, isLoading, refetch } = useQuery({
+    queryKey: ["clubs", queryParams],
     queryFn: async () => {
-      const res = await fetch(`/api/clubs?${queryParams.toString()}`);
+      const res = await fetch(`/api/clubs?${queryParams}`);
       const data = await res.json();
-      if(!res.ok) {
-        throw new Error(data.error || "Failed to fetch clubs");
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to fetch clubs");
       return data;
     },
     enabled: false,
   });
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSearchTriggered(true);
+    refetch();
+  };
+
   useEffect(() => {
-    if (queryParams.toString() === "") {
-      refetch();
-    }
-  }, [queryParams]);
+    if (queryParams === "") refetch();
+  }, [queryParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-      <div className="clubs-component-container">
-        <div className="clubs-header">
-          <h1 className="clubs-title">Clubs</h1>
-          <button className="clubs-create-button">Create a Club</button>
-        </div>
-
-        {hasClubs && authUser?.clubs?.length > 0 ? (
-          <div className="clubs-logo-container1">
-        {authUser.clubs.map((club, index) => (
-          <img key={index} className="clubs-logo1" src={gift} alt="Logo" />
-        ))}
-          </div>
-        ) : null}
-
-      <form onSubmit={handleSubmit}>
-        <div className="clubs-search-bar">
-            <div>
-              <input 
-                autoComplete="off"
-                name="clubName"
-                value={formData.clubName}
-                className="clubs-search-input" 
-                type="text" 
-                placeholder="Club Name"
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <input 
-                autoComplete="off"
-                name="location"
-                value={formData.location}
-                className="clubs-search-input" 
-                type="text" 
-                placeholder="Location"
-                onChange={handleInputChange} 
-              />
-            </div>
-          
-
-          {/* Sport Type Dropdown */}
-            <div className="clubs-dropdown" ref={sportDropdownRef} onClick={() => setIsSportDropdownOpen(!isSportDropdownOpen)}>
-              <span>{selectedSport}</span>
-              {isSportDropdownOpen && (
-                <div className="clubs-dropdown-menu">
-                  {["All","Running", "Cycling", "Swimming"].map((sport) => (
-                    <div key={sport} className="dropdown-option" onClick={() => handleSportSelect(sport)}>
-                      {sport}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          {/* Club Type Dropdown */}
-            <div className="clubs-dropdown" ref={clubTypeDropdownRef} onClick={() => setIsClubTypeDropdownOpen(!isClubTypeDropdownOpen)}>
-              <span>{selectedClubType}</span>
-              {isClubTypeDropdownOpen && (
-                <div className="clubs-dropdown-menu">
-                  {["All", "Public", "Private"].map((clubType) => (
-                    <div key={clubType} className="dropdown-option" onClick={() => handleClubTypeSelect(clubType)}>
-                      {clubType}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button className="clubs-search-button">Search</button>
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-brand">Clubs</h1>
+        <button className="btn-primary">Create a Club</button>
       </div>
-    </form>
-      <br />
-      {isSearchTriggered ? (
-        isLoading ? (
-          <p>Loading...</p>
-        ) : clubs?.length ? (
-          clubs.map((club) => <Club key={club._id} club={club} />)
-        ) : (
-          <p>No clubs found.</p>
-        )
-      ) : (
-        <p>Enter search criteria and click "Search".</p>
+
+      {authUser?.clubs?.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {authUser.clubs.map((_, index) => (
+            <div key={index} className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+              {index + 1}
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Search bar */}
+      <form onSubmit={handleSubmit} className="card p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <input
+            className="input md:flex-1"
+            autoComplete="off"
+            name="clubName"
+            value={formData.clubName}
+            type="text"
+            placeholder="Club Name"
+            onChange={handleInputChange}
+          />
+          <input
+            className="input md:flex-1"
+            autoComplete="off"
+            name="location"
+            value={formData.location}
+            type="text"
+            placeholder="Location"
+            onChange={handleInputChange}
+          />
+          <select
+            className="input md:w-40"
+            value={selectedSport}
+            onChange={(e) => setSelectedSport(e.target.value)}
+          >
+            {SPORTS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <select
+            className="input md:w-48"
+            value={selectedClubType}
+            onChange={(e) => setSelectedClubType(e.target.value)}
+          >
+            {CLUB_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+          <button type="submit" className="btn-primary md:w-auto">
+            <Search className="h-4 w-4" />
+            Search
+          </button>
+        </div>
+      </form>
+
+      {/* Results */}
+      <div className="mt-6 space-y-4">
+        {isSearchTriggered ? (
+          isLoading ? (
+            <p className="text-center text-sm text-gray-400">Loading...</p>
+          ) : clubs?.length ? (
+            clubs.map((club) => <Club key={club._id} club={club} />)
+          ) : (
+            <p className="text-center text-sm text-gray-400">No clubs found.</p>
+          )
+        ) : (
+          <p className="text-center text-sm text-gray-400">
+            Enter search criteria and click "Search".
+          </p>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,43 +1,35 @@
-import React, { useState } from 'react';
-import arrow from '../img/arrow.png'
-import cross from '../img/cross.png'
+import React, { useState } from "react";
+import { Search, X, ChevronDown } from "lucide-react";
 
+const options = ["Athletes", "Teams", "Leagues", "Sports"];
 
 const SearchFilter = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState('Athletes');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const options = ['Athletes', 'Teams', 'Leagues', 'Sports'];
-
-  const toggleSelect = () => setIsOpen(!isOpen);
-
-  const handleSelect = (option) => {
-    setSelected(option);
-    setIsOpen(false);
-  };
-
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-
-  const clearSearch = () => setSearchTerm('');
+  const [selected, setSelected] = useState("Athletes");
+  const [searchTerm, setSearchTerm] = useState("");
 
   return (
-    <div className="search-filter">
-      {/* Custom Select */}
-      <div className="custom-select">
-        <div className="select-box" onClick={toggleSelect}>
+    <div className="flex w-full max-w-md items-center gap-2">
+      {/* Category select */}
+      <div className="relative shrink-0">
+        <button
+          type="button"
+          onClick={() => setIsOpen((o) => !o)}
+          className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:border-brand"
+        >
           {selected}
-          <span className="arrow">
-            <img src={arrow}/>
-          </span>
-        </div>
+          <ChevronDown className="h-4 w-4 text-gray-400" />
+        </button>
         {isOpen && (
-          <ul className="select-options">
+          <ul className="absolute z-50 mt-1 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
             {options.map((option) => (
               <li
                 key={option}
-                onClick={() => handleSelect(option)}
-                className="option"
+                onClick={() => {
+                  setSelected(option);
+                  setIsOpen(false);
+                }}
+                className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand"
               >
                 {option}
               </li>
@@ -46,21 +38,23 @@ const SearchFilter = () => {
         )}
       </div>
 
-      {/* Search Input */}
-      <div className="search-input-container">
+      {/* Search input */}
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
           value={searchTerm}
-          onChange={handleSearchChange}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search"
-          className="search-input"
+          className="input pl-9 pr-9"
         />
         {searchTerm && (
           <button
-            onClick={clearSearch}
-            className="clear-button"
+            onClick={() => setSearchTerm("")}
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100"
           >
-            <img src={cross} id='searchbox'/>
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>

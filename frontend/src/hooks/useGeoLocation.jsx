@@ -36,7 +36,7 @@ export default function useGeolocation() {
 
         function onError(error) {
             console.error("Error retrieving geolocation: ", error);
-            setError(err.message || "Failed to retrieve location");
+            setError(error.message || "Failed to retrieve location");
             setLoading(false);
         }
 

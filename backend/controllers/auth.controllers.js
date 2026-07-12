@@ -18,7 +18,7 @@ export const signup = async (req, res) => {
 
         const existingEmail = await User.findOne({email});
         if(existingEmail){
-            res.status(400).json({error: "Email already taken"});
+            return res.status(400).json({error: "Email already taken"});
         }
 
         if(password.length < 8){
@@ -78,6 +78,7 @@ export const login = async (req, res) => {
             firstname: user.firstname,
             lastname: user.lastname,
             email: user.email,
+            gender: user.gender,
             followers: user.followers,
             following: user.following,
             profileImg: user.profileImg,

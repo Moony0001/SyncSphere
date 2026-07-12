@@ -1,45 +1,31 @@
-import * as React from "react"
-import circle from '../img/circle.png'
-import watch from '../img/watch.png'
-import { Link } from "react-router-dom"
+import * as React from "react";
+import { Link } from "react-router-dom";
+import watch from "../img/watch.png";
 
 export default function Middle() {
   return (
-    <div className="getting-started">
-      {/* Background Image */}
-      <div className="background-image">
-        <img
-          src={watch}// Placeholder image
-          alt="Getting Started Background"
-        />
-      </div>
+    <div className="card overflow-hidden">
+      <img src={watch} alt="Getting started" className="h-44 w-full object-cover" />
 
-      {/* Content Section */}
-      <div className="content">
-        <h1 className="title">Getting Started</h1>
+      <div className="p-6">
+        <h1 className="text-xl font-bold text-gray-800">Getting Started</h1>
 
-        {/* Step Section */}
-        <div className="step">
-          <div className="icon">
-            
-          </div>
-          <div className="step-content">
-            <div className="middle-description">
-            <img src={circle}/>
-            <h2 className="step-title">Record your first activity</h2>
-            </div>
-            <p className="step-description">
-              Set up your GPS device and seamlessly upload your workouts right
-              here
+        <div className="mt-4 flex items-start gap-3">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-brand text-xs font-bold text-brand">
+            1
+          </span>
+          <div>
+            <h2 className="font-semibold text-gray-800">Record your first activity</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Set up your GPS device and seamlessly upload your workouts right here.
             </p>
           </div>
         </div>
 
-        {/* Button */}
-        <Link to={"/post/create"}>
-        <button className="connect-button">Record Activity</button>
+        <Link to="/post/create">
+          <button className="btn-primary mt-6">Record Activity</button>
         </Link>
       </div>
     </div>
-  )
+  );
 }

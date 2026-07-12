@@ -1,140 +1,58 @@
-import React from 'react';
+import React from "react";
+import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const footerStyle = {
-  backgroundColor: '#f7f7fa',
-  padding: '40px 20px', // Regular padding for spacing
-  fontFamily: "'Helvetica Neue', Arial, sans-serif",
-  width: '100%', // Full width of the page
-};
+const columns = [
+  { title: "About", links: ["About SyncSphere", "Features", "Careers"] },
+  { title: "Explore", links: ["Routes", "Segments", "Clubs"] },
+  { title: "Help", links: ["Support", "Privacy", "Terms"] },
+];
 
-const containerStyle = {
-  maxWidth: '1200px',
-  margin: '0 auto',
-  display: 'flex',
-  flexWrap: 'wrap',
-  justifyContent: 'space-between',
-  padding: '0 20px',
-};
-
-const sectionStyle = {
-  flex: '1 1 200px',
-  marginBottom: '10px', // Reduced margin to minimize height
-};
-
-const headingStyle = {
-  color: '#242428',
-  fontSize: '16px',
-  fontWeight: 600,
-};
-
-const listStyle = {
-  listStyleType: 'none',
-  padding: 0,
-};
-
-const listItemStyle = {
-  marginBottom: '5px', // Reduced margin between list items
-};
-
-const linkStyle = {
-  color: '#606065',
-  textDecoration: 'none',
-  fontSize: '14px',
-};
-
-const socialIconsStyle = {
-  display: 'flex',
-  gap: '10px', // Slightly reduced gap to save space
-};
-
-const iconStyle = {
-  color: '#606065',
-  fontSize: '20px',
-};
-
-const appButtonsStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '8px', // Reduced gap to minimize height
-};
-
-const appButtonImageStyle = {
-  height: '35px', // Reduced height for smaller icons
-  width: 'auto',
-};
-
-const footerBottomStyle = {
-  textAlign: 'center',
-  marginTop: '20px', // Standard margin
-  paddingTop: '10px', // Standard padding to minimize height
-  borderTop: '1px solid #e5e5e5',
-};
-
-const copyrightStyle = {
-  color: '#606065',
-  fontSize: '12px',
-};
-
-// Main content style without additional padding at the bottom
-const contentStyle = {
-  padding: '20px', // Standard padding for main content
-};
-
-export default function Page() {
+export default function Footer() {
   return (
-    <div>
-      <footer style={footerStyle}>
-        <div style={containerStyle}>
-          <div style={sectionStyle}>
-            <h3 style={headingStyle}>About</h3>
-            <ul style={listStyle}>
-              <li style={listItemStyle}><a href="#" style={linkStyle}>About Strava</a></li>
-              <li style={listItemStyle}><a href="#" style={linkStyle}>Features</a></li>
-            </ul>
+    <footer className="mt-12 border-t border-gray-200 bg-white">
+      <div className="mx-auto grid max-w-container grid-cols-2 gap-8 px-6 py-10 sm:grid-cols-3 md:grid-cols-5">
+        <div className="col-span-2 sm:col-span-3 md:col-span-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-brand">SyncSphere</span>
           </div>
-          <div style={sectionStyle}>
-            <h3 style={headingStyle}>Explore</h3>
-            <ul style={listStyle}>
-              <li style={listItemStyle}><a href="#" style={linkStyle}>Routes</a></li>
-              <li style={listItemStyle}><a href="#" style={linkStyle}>Segments</a></li>
-            </ul>
-          </div>
-          <div style={sectionStyle}>
-            <h3 style={headingStyle}>Follow</h3>
-            <div style={socialIconsStyle}>
-              <a href="#" aria-label="Facebook" style={iconStyle}>
-                <i className="icon-facebook"></i>
+          <p className="mt-3 max-w-xs text-sm text-gray-500">
+            Community-powered motivation. Track your activities, share your progress,
+            and move together.
+          </p>
+          <div className="mt-4 flex gap-3 text-gray-500">
+            {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
+              <a
+                key={i}
+                href="#"
+                className="rounded-full p-2 transition-colors hover:bg-gray-100 hover:text-brand"
+                aria-label="Social link"
+              >
+                <Icon className="h-5 w-5" />
               </a>
-              <a href="#" aria-label="Twitter" style={iconStyle}>
-                <i className="icon-twitter"></i>
-              </a>
-              <a href="#" aria-label="Instagram" style={iconStyle}>
-                <i className="icon-instagram"></i>
-              </a>
-              <a href="#" aria-label="YouTube" style={iconStyle}>
-                <i className="icon-youtube"></i>
-              </a>
-            </div>
-          </div>
-          <div style={sectionStyle}>
-            <h3 style={headingStyle}>Help</h3>
-            <ul style={listStyle}>
-              <li style={listItemStyle}><a href="#" style={linkStyle}>Support</a></li>
-              <li style={listItemStyle}><a href="#" style={linkStyle}>Privacy</a></li>
-            </ul>
-          </div>
-          <div style={sectionStyle}>
-            <h3 style={headingStyle}>Download</h3>
-            <div style={appButtonsStyle}>
-              <img src="appstore.png" alt="App Store" style={appButtonImageStyle} />
-              <img src="googleplay.png" alt="Google Play" style={appButtonImageStyle} />
-            </div>
+            ))}
           </div>
         </div>
-        <div style={footerBottomStyle}>
-          <p style={copyrightStyle}>&copy; {new Date().getFullYear()} Strava. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
+
+        {columns.map((col) => (
+          <div key={col.title}>
+            <h3 className="text-sm font-semibold text-gray-800">{col.title}</h3>
+            <ul className="mt-3 space-y-2">
+              {col.links.map((link) => (
+                <li key={link}>
+                  <a href="#" className="text-sm text-gray-500 transition-colors hover:text-brand">
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-gray-100 py-5 text-center text-xs text-gray-400">
+        &copy; {new Date().getFullYear()} SyncSphere. All rights reserved.
+      </div>
+    </footer>
   );
 }

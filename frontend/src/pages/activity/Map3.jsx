@@ -1,38 +1,47 @@
-import React from 'react'
-import Map from '../../components/common/Map'
-export default function Map3({setPage, page, timer, startTimer, pauseTimer, setIsRecording, distance}){
-const formattedTime = new Date(timer * 1000).toISOString().slice(11, 19); // Format in HH:mm:ss
+import React from "react";
+
+export default function Map3({ setPage, timer, startTimer, pauseTimer, setIsRecording, distance }) {
+  const formattedTime = new Date(timer * 1000).toISOString().slice(11, 19);
 
   return (
-    <>
-<div className="footer-section">
-    <div className="content-above">
-        <div className="timer-display">
-            {formattedTime}
+    <div className="card p-5 shadow-2xl">
+      <div className="text-center font-mono text-4xl font-bold tracking-tight text-gray-800">
+        {formattedTime}
+      </div>
+
+      <div className="mt-4 flex justify-around text-center">
+        <div>
+          <p className="text-xs text-gray-400">Distance</p>
+          <p className="text-lg font-bold text-gray-800">{(distance || 0).toFixed(2)} km</p>
         </div>
-    </div>
-    <div className="action-container">
-        <div className="launch-button">
-            <div id="dis">{(distance || 0).toFixed(2)} km</div>
-            <div id='speed'>7.0 km/hr</div>
+        <div>
+          <p className="text-xs text-gray-400">Speed</p>
+          <p className="text-lg font-bold text-gray-800">7.0 km/hr</p>
         </div>
-        <div className='trigger' >
-        <button id='resume' onClick={() => {
+      </div>
+
+      <div className="mt-5 flex gap-3">
+        <button
+          onClick={() => {
             setIsRecording(true);
             startTimer();
-            setPage((prev) => ({ ...prev, third: false , second: true}))}}>
-            RESUME
+            setPage((prev) => ({ ...prev, third: false, second: true }));
+          }}
+          className="flex-1 rounded-lg bg-green-500 py-3 text-lg font-bold tracking-wide text-white transition-colors hover:bg-green-600"
+        >
+          RESUME
         </button>
-        <button id='finish' onClick={() => {
+        <button
+          onClick={() => {
             setIsRecording(false);
             pauseTimer();
-            setPage((prev) => ({ ...prev, fourth: true }))}}>
-            FINISH
+            setPage((prev) => ({ ...prev, third: false, fourth: true }));
+          }}
+          className="btn-danger flex-1 py-3 text-lg font-bold tracking-wide"
+        >
+          FINISH
         </button>
-        </div>
-        
+      </div>
     </div>
-</div>
-    </>
-  )
+  );
 }

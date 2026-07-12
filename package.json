@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon backend/server.js",
     "start": "cross-env NODE_ENV=production node backend/server.js",
-    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +27,9 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "nodemon": "^3.1.7"
+    "mongodb-memory-server": "^11.2.0",
+    "nodemon": "^3.1.7",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.10"
   }
 }

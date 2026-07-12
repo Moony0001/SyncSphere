@@ -2,7 +2,6 @@
 import { useState } from 'react'
 
 //Component imports
-import './App.css'
 import HomePage from './pages/home/HomePage'
 import Login from './pages/auth/login/Login'
 import SignUp from './pages/auth/signup/SignUp'

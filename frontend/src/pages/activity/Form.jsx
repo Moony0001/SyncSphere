@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { ImagePlus } from "lucide-react";
+import { formatDuration } from "../../lib/formatTime";
 
 function Form({ selectedSport, finalTime, finalDistance }) {
   const [imageData, setImageData] = useState(null); // base64 for upload
@@ -11,7 +12,7 @@ function Form({ selectedSport, finalTime, finalDistance }) {
   const [text, setText] = useState("");
   const navigate = useNavigate();
 
-  const formattedTime = new Date((finalTime || 0) * 1000).toISOString().slice(11, 19);
+  const formattedTime = formatDuration(finalTime);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];

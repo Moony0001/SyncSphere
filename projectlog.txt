@@ -779,3 +779,133 @@ H. TEST-SUITE CHANGES MADE ALONGSIDE THE FIXES
   Verified with: `npm run build` (from /frontend) -> success, CSS ~22 KB.
 
 ------------------------- end of frontend-overhaul section ----------------------
+
+
+################################################################################
+#                                                                              #
+#   MOBILE MAP / GEOLOCATION BUG FIX  (added 2026-07-12)                       #
+#                                                                              #
+#   Symptoms reported (deployed on Render, over HTTPS):                        #
+#     - iPhone 16 Pro Max: while picking a sport the Leaflet map showed but    #
+#       (a) never asked for location permission and (b) just showed "blue      #
+#       water". Pressing START -> the screen went BLANK, nothing rendered.     #
+#     - Desktop: it DID prompt and mostly worked, but some map tiles didn't    #
+#       load, and the detected location was wrong (showed Delhi while in        #
+#       Gwalior).                                                              #
+#                                                                              #
+#   NOTE: I could not reproduce on the exact iOS device from here, so the      #
+#   root-cause analysis below is from reading the code against the reported    #
+#   behaviour. The fixes address every identified defect and all the symptoms. #
+#   If anything remains, capture the iOS Safari console via a Mac + Safari     #
+#   Web Inspector (Settings > Safari > Advanced > Web Inspector) — that will   #
+#   show the exact error line.                                                 #
+#                                                                              #
+################################################################################
+
+
+================================================================================
+ROOT-CAUSE ANALYSIS (symptom -> cause)
+================================================================================
+
+1) "Blue water" + no permission prompt on mobile
+   - The map was initialised at [0, 0] (storeCoordinates defaulted to
+     {latitude:0, longitude:0}). [0,0] is in the Atlantic/Gulf of Guinea — i.e.
+     "blue water". So before any GPS fix, that's exactly what shows.
+   - `useGeolocation` called watchPosition with `enableHighAccuracy: true` and
+     NO `timeout`. On mobile, if a fix can't be obtained (e.g. Location Services
+     off for Safari, or a slow high-accuracy lock), watchPosition can hang
+     forever without calling success OR error, so `loading` stayed true and the
+     map never moved off [0,0]. (Whether iOS shows the prompt is partly OS-side,
+     but the missing timeout is what left the UI stuck.)
+
+2) Blank screen when pressing START on mobile
+   - `useGeolocation`'s initial position was {latitude:null, longitude:null}.
+   - The recording effect's guard was:
+        if (!isRecording || !location ||
+            location.latitude === 0 || location.longitude === 0) return;
+     With latitude/longitude = null, `null === 0` is FALSE, so the guard did
+     NOT stop, and null coordinates were pushed into the Leaflet polyline /
+     marker / setView. Feeding degenerate coordinates (and, combined with the
+     container-size problem below, an un-sized map) is the most likely trigger
+     for the render blowing up to a blank screen once recording began. The old
+     `!== 0` / `=== 0` checks simply do not handle null/NaN.
+
+3) Tiles not loading ("blocks of the map not loading") on desktop, blank on
+   mobile
+   - Leaflet reads its container size ONCE at init. The map lives inside a
+     `fixed inset-0` / flex layout, so on the first frame the container size can
+     be wrong or zero — Leaflet then only requests tiles for that wrong
+     viewport, leaving blank patches (desktop) or a blank map (mobile). The code
+     never called `map.invalidateSize()` to correct this.
+
+4) Wrong location on desktop (Gwalior shown as Delhi)
+   - This is EXPECTED, not a code bug. A desktop with no GPS resolves location
+     from Wi-Fi/IP databases, which are coarse and often land on a regional hub
+     (Delhi). On a real phone with GPS + enableHighAccuracy the fix is accurate.
+
+5) (Pre-existing) double Leaflet load
+   - index.html loaded Leaflet JS+CSS from a CDN, AND the app imported the npm
+     `leaflet` package (bundled). Two copies of Leaflet is wasteful and can
+     cause subtle issues; only the bundled one was actually used by the code.
+
+
+================================================================================
+FIXES APPLIED
+================================================================================
+
+  frontend/src/hooks/useGeoLocation.jsx  (rewritten)
+    - `position` starts as `null` (not {null,null}), so "no fix yet" is
+      unambiguous and can't sneak past numeric guards.
+    - Only emits coordinates when BOTH are Number.isFinite.
+    - watchPosition now uses { enableHighAccuracy:true, timeout:15000,
+      maximumAge:10000 } so it can't hang forever and a recent cached fix can
+      satisfy the first request quickly.
+
+  frontend/src/components/common/Map.jsx  (rewritten)
+    - Default/initial view is Gwalior (26.2183, 78.1828) instead of [0,0], and
+      it reuses the last successful fix (persisted in localStorage). No more
+      "blue water".
+    - ALL coordinate use is gated by `isValid(lat,lng)` (Number.isFinite), so
+      null/NaN can never reach Leaflet (marker, polyline, setView, panTo).
+    - Calls `map.invalidateSize()` after layout settles (0ms + 300ms) and on
+      window resize — fixes the blank/partial tiles on both desktop and mobile.
+    - Recording is the single owner of the polyline (keeps the earlier
+      double-count fix) and only records when there's a valid fix; gently
+      follows the user with panTo while recording.
+    - Shows a small status banner: "Locating you…" while loading, or
+      "Location unavailable — enable location access…" on error, so the user
+      isn't staring at a silent map.
+    - Imports the Leaflet stylesheet from the npm package
+      (`import "leaflet/dist/leaflet.css"`) and the CDN <link>/<script> were
+      removed from index.html — one Leaflet, self-contained, no CDN dependency.
+    - Fixed the OSM attribution to "© OpenStreetMap contributors".
+
+  frontend/index.html
+    - Removed the Leaflet CDN <link> and <script> (now bundled).
+
+  frontend/src/lib/formatTime.js  (new)  + Map2.jsx / Map3.jsx / Form.jsx
+    - The timer display used `new Date(seconds*1000).toISOString().slice(11,19)`.
+      `toISOString()` throws a RangeError on a NaN/invalid date, so a bad timer
+      value would crash the panel to blank. Replaced with a `formatDuration()`
+      helper that can't throw and also counts correctly past 24h.
+
+================================================================================
+WHAT TO EXPECT NOW / HOW TO VERIFY
+================================================================================
+
+  - On a phone with Location Services ON for Safari and location access allowed
+    for the site, it should prompt, centre on your real position, and record.
+  - If permission is denied/unavailable, you now get the Gwalior map + a clear
+    "Location unavailable" banner instead of blue water or a blank screen — and
+    START no longer crashes.
+  - Desktop tiles should fill in fully (invalidateSize).
+  - Desktop location may still be approximate — that's IP/Wi-Fi geolocation,
+    not a bug.
+  - Verified with `npm run build` (frontend) -> success. Runtime behaviour on a
+    physical iPhone should be re-tested after redeploy; if a blank screen ever
+    recurs, grab the exact error via Safari Web Inspector and we'll pinpoint it.
+
+  Files changed: index.html, hooks/useGeoLocation.jsx, components/common/Map.jsx,
+  lib/formatTime.js (new), pages/activity/Map2.jsx, Map3.jsx, Form.jsx.
+
+--------------------- end of mobile map / geolocation section -------------------

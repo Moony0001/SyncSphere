@@ -1,118 +1,136 @@
-import storeCoordinates from '../../hooks/storeCoordinates';
-import useGeolocation from '../../hooks/useGeoLocation';
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from "react";
 import L from "leaflet";
-import marker from "../../img/marker.png"
+import "leaflet/dist/leaflet.css";
+import storeCoordinates from "../../hooks/storeCoordinates";
+import useGeolocation from "../../hooks/useGeoLocation";
+import markerIcon from "../../img/marker.png";
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
-    console.log("Calculating distance between:", lat1, lon1, "and", lat2, lon2);
-    const R = 6371; // Radius of Earth in km
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((lat1 * Math.PI) / 180) *
-            Math.cos((lat2 * Math.PI) / 180) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+const isValid = (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng);
 
-export default function Map({isRecording, distance, setDistance}) {
+export default function Map({ isRecording, setDistance }) {
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const polylineRef = useRef(null);
+  const latlngs = useRef([]);
+  const iconRef = useRef(
+    L.icon({ iconUrl: markerIcon, iconSize: [18, 18], iconAnchor: [9, 9] })
+  );
+  const centeredRef = useRef(false);
 
-    const mapRef = useRef(null);
-    var myIcon = L.icon({
-        iconUrl: marker,
-        iconSize: [12, 12],
-    });
-    const userMarkerRef = useRef();
-    const polylineRef = useRef();
-    const latlngs = useRef([]);
-    
+  // Fall back to Gwalior instead of [0, 0] (which is the Atlantic — the
+  // "blue water" you saw). Reuses the last successful fix if we have one.
+  const { value: coordinates, setValue: setCoordinates } = storeCoordinates(
+    "lastKnownLocation",
+    { latitude: 26.2183, longitude: 78.1828 }
+  );
 
-    const { value: coordinates, setValue: setCoordinates } = storeCoordinates('authUser.id', {
-        latitude: 0,
-        longitude: 0,
-    });
+  const { position: location, error, loading } = useGeolocation();
 
-    const { position: location, error, loading } = useGeolocation();
+  // Initialise the Leaflet map exactly once.
+  useEffect(() => {
+    if (mapRef.current) return;
 
-    useEffect(() => {
-        if (!mapRef.current) {
-            mapRef.current = L.map('map').setView([coordinates.latitude, coordinates.longitude], 13);
+    const map = L.map("map").setView(
+      [coordinates.latitude, coordinates.longitude],
+      13
+    );
 
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '© SyncSphere'
-            }).addTo(mapRef.current);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
 
-            polylineRef.current = L.polyline([], {color: 'red'}).addTo(mapRef.current);
+    polylineRef.current = L.polyline([], { color: "#1177FF", weight: 5 }).addTo(map);
+    mapRef.current = map;
 
-        }
-    }, [coordinates.latitude, coordinates.longitude]);
+    // Leaflet caches the container size at init. Inside a flex/fixed layout
+    // (and especially on mobile) that size is often wrong or zero on the first
+    // frame, which makes tiles load blank or half-render. invalidateSize()
+    // recomputes it once layout has settled and on any resize.
+    const invalidate = () => map.invalidateSize();
+    const t1 = setTimeout(invalidate, 0);
+    const t2 = setTimeout(invalidate, 300);
+    window.addEventListener("resize", invalidate);
 
-    useEffect(() => {
-        setCoordinates({...coordinates})
-        if (loading) return;        // Don't do anything if loading
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", invalidate);
+      map.remove();
+      mapRef.current = null;
+      polylineRef.current = null;
+      markerRef.current = null;
+      latlngs.current = [];
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-        if (error) {
-            console.error("Error retrieving geolocation:", error);
-            return; 
-        }
+  // Move the user marker + centre the map when a valid fix arrives.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !location) return;
+    const { latitude, longitude } = location;
+    if (!isValid(latitude, longitude)) return;
 
-        if (location.latitude !== 0 && location.longitude !== 0) {    
-            if(userMarkerRef.current){
-                mapRef.current.removeLayer(userMarkerRef.current);
-            }
+    if (markerRef.current) {
+      markerRef.current.setLatLng([latitude, longitude]);
+    } else {
+      markerRef.current = L.marker([latitude, longitude], {
+        icon: iconRef.current,
+      }).addTo(map);
+    }
 
-            userMarkerRef.current = L.marker([location.latitude, location.longitude], {icon: myIcon}).addTo(mapRef.current);
-            mapRef.current.setView([location.latitude, location.longitude], 19);}
+    if (!centeredRef.current) {
+      map.setView([latitude, longitude], 17);
+      centeredRef.current = true;
+      setCoordinates({ latitude, longitude }); // remember for next session
+    } else if (isRecording) {
+      map.panTo([latitude, longitude]); // gently follow while recording
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, isRecording]);
 
-        // NOTE: recording the route points, drawing the polyline, and computing
-        // distance are ALL handled by the effect below. Previously this effect
-        // ALSO pushed the point while recording, so every GPS fix was added
-        // twice — the distance effect then measured the gap between a point and
-        // itself (~0), which is why distance never accumulated.
-    }, [location, coordinates.latitude, coordinates.longitude]);
+  // Record the route + accumulate distance. Single owner of the polyline.
+  useEffect(() => {
+    if (!isRecording || !location) return;
+    const { latitude, longitude } = location;
+    if (!isValid(latitude, longitude)) return;
 
-    useEffect(() => {
-        if (!isRecording || !location || location.latitude === 0 || location.longitude === 0) return;
-    
-        const newPoint = [location.latitude, location.longitude];
-        console.log("New Location: ", newPoint);
-    
-        if (latlngs.current.length > 0) {
-            const [prevLat, prevLon] = latlngs.current[latlngs.current.length - 1];
-            console.log("Previous Point (last in latlngs):", [prevLat, prevLon]);
-            const distanceToAdd = haversineDistance(prevLat, prevLon, newPoint[0], newPoint[1]);
-            console.log("Adding Distance: ", distanceToAdd);
-            setDistance((prevDistance) => {
-                console.log("Previous Distance: ", prevDistance);
-                const updatedDistance = prevDistance + distanceToAdd;
-                console.log("Updated Distance: ", updatedDistance);
-                return updatedDistance; // Ensure the state gets updated properly
-            });
-        }
-    
-        latlngs.current.push(newPoint);
-        polylineRef.current.setLatLngs(latlngs.current);
-    }, [location, isRecording]);
-    
+    const pts = latlngs.current;
+    if (pts.length > 0) {
+      const [pLat, pLon] = pts[pts.length - 1];
+      const d = haversineDistance(pLat, pLon, latitude, longitude);
+      if (Number.isFinite(d)) setDistance((prev) => prev + d);
+    }
+    pts.push([latitude, longitude]);
+    if (polylineRef.current) polylineRef.current.setLatLngs(pts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, isRecording]);
 
-    useEffect(() => {
-        // Cleanup on unmount
-        return () => {
-            if (mapRef.current) {
-                mapRef.current.remove();
-                mapRef.current = null;
-            }
-            setDistance(0); // Reset distance
-            latlngs.current = [];
-        };
-    }, []);
-
-    return (
-        <div id="map" className="h-full w-full" />
-    )
+  return (
+    <>
+      <div id="map" className="h-full w-full" />
+      {(loading || error) && (
+        <div className="pointer-events-none absolute inset-x-0 top-4 z-[1100] flex justify-center px-4">
+          <div className="rounded-full bg-white/95 px-4 py-2 text-center text-sm text-gray-700 shadow-md">
+            {loading
+              ? "Locating you…"
+              : "Location unavailable — enable location access to track your route."}
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

@@ -1,7 +1,8 @@
 import React from "react";
+import { formatDuration } from "../../lib/formatTime";
 
 export default function Map3({ setPage, timer, startTimer, pauseTimer, setIsRecording, distance }) {
-  const formattedTime = new Date(timer * 1000).toISOString().slice(11, 19);
+  const formattedTime = formatDuration(timer);
 
   return (
     <div className="card p-5 shadow-2xl">

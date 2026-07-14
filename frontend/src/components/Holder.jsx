@@ -1,6 +1,6 @@
 import React from "react";
 import UserProfile from "./UserProfile";
-import Middle from "./Middle";
+import Feed from "./Feed";
 import NoClub from "./NoClub";
 import Friends from "./Friends";
 
@@ -18,7 +18,7 @@ export default function Holder({ setHamburger }) {
 
       {/* Center feed */}
       <div className="min-w-0">
-        <Middle />
+        <Feed />
       </div>
 
       {/* Right column */}

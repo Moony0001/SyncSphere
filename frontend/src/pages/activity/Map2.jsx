@@ -1,5 +1,6 @@
 import React from "react";
 import { formatDuration } from "../../lib/formatTime";
+import { formatPace, formatSpeed } from "../../lib/metrics";
 
 export default function Map2({ setPage, timer, pauseTimer, setIsRecording, distance }) {
   const formattedTime = formatDuration(timer);
@@ -10,14 +11,18 @@ export default function Map2({ setPage, timer, pauseTimer, setIsRecording, dista
         {formattedTime}
       </div>
 
-      <div className="mt-4 flex justify-around text-center">
+      <div className="mt-4 grid grid-cols-3 text-center">
         <div>
           <p className="text-xs text-gray-400">Distance</p>
           <p className="text-lg font-bold text-gray-800">{(distance || 0).toFixed(2)} km</p>
         </div>
         <div>
+          <p className="text-xs text-gray-400">Pace</p>
+          <p className="text-lg font-bold text-gray-800">{formatPace(distance, timer)}</p>
+        </div>
+        <div>
           <p className="text-xs text-gray-400">Speed</p>
-          <p className="text-lg font-bold text-gray-800">7.0 km/hr</p>
+          <p className="text-lg font-bold text-gray-800">{formatSpeed(distance, timer)}</p>
         </div>
       </div>
 

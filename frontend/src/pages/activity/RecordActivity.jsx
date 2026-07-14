@@ -14,6 +14,7 @@ export default function RecordActivity() {
   const [distance, setDistance] = useState(0);
 
   const timerRef = useRef(null);
+  const routeRef = useRef([]); // recorded [lat,lng] points, shared with Map + Form
 
   const startTimer = () => {
     if (!isTimerRunning) {
@@ -32,7 +33,7 @@ export default function RecordActivity() {
   return (
     <div className="fixed inset-0">
       {/* Full-screen map */}
-      <Map isRecording={isRecording} distance={distance} setDistance={setDistance} />
+      <Map isRecording={isRecording} setDistance={setDistance} routeRef={routeRef} />
 
       {/* Bottom control sheet */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] flex justify-center p-4">
@@ -74,6 +75,7 @@ export default function RecordActivity() {
             selectedSport={selectedSport}
             finalTime={timer}
             finalDistance={distance.toFixed(2)}
+            route={routeRef.current}
           />
         </div>
       )}

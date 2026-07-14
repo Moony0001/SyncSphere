@@ -19,11 +19,14 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 
 const isValid = (lat, lng) => Number.isFinite(lat) && Number.isFinite(lng);
 
-export default function Map({ isRecording, setDistance }) {
+export default function Map({ isRecording, setDistance, routeRef }) {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const polylineRef = useRef(null);
-  const latlngs = useRef([]);
+  const fallbackRoute = useRef([]);
+  // The recorded [lat,lng] points. If the parent passes a routeRef we write into
+  // it (so the finish screen can render a snapshot); otherwise we keep our own.
+  const pointsRef = routeRef || fallbackRoute;
   const iconRef = useRef(
     L.icon({ iconUrl: markerIcon, iconSize: [18, 18], iconAnchor: [9, 9] })
   );
@@ -72,7 +75,7 @@ export default function Map({ isRecording, setDistance }) {
       mapRef.current = null;
       polylineRef.current = null;
       markerRef.current = null;
-      latlngs.current = [];
+      pointsRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -108,7 +111,7 @@ export default function Map({ isRecording, setDistance }) {
     const { latitude, longitude } = location;
     if (!isValid(latitude, longitude)) return;
 
-    const pts = latlngs.current;
+    const pts = pointsRef.current;
     if (pts.length > 0) {
       const [pLat, pLon] = pts[pts.length - 1];
       const d = haversineDistance(pLat, pLon, latitude, longitude);

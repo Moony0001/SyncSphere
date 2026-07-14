@@ -909,3 +909,245 @@ WHAT TO EXPECT NOW / HOW TO VERIFY
   lib/formatTime.js (new), pages/activity/Map2.jsx, Map3.jsx, Form.jsx.
 
 --------------------- end of mobile map / geolocation section -------------------
+
+
+################################################################################
+#                                                                              #
+#   ACTIVITY FEATURES: SPEED/PACE, ROUTE SNAPSHOT, REAL FEED  (2026-07-12)     #
+#                                                                              #
+#   Three requests after the first successful mobile test:                    #
+#     1. Track real speed AND pace (speed was hardcoded to 7 km/h).           #
+#     2. Save a snapshot of the traced route as the activity image, per       #
+#        activity, per user.                                                   #
+#     3. Actually SHOW saved activities (home + profile) with real details    #
+#        (duration, pace, distance, personal records). The home/profile were  #
+#        showing a hardcoded demo card.                                        #
+#                                                                              #
+################################################################################
+
+
+================================================================================
+1. SPEED & PACE (was hardcoded "7.0 km/hr")
+================================================================================
+
+  NEW  frontend/src/lib/metrics.js
+    - parseDuration("HH:MM:SS") -> seconds
+    - speedKmh(distanceKm, seconds) + formatSpeed(...)  -> "X.X km/h"
+    - formatPace(distanceKm, seconds) -> "M:SS /km" (minutes per km)
+    - computePRs(activities) -> { postId: [labels] } (see section 3)
+
+  These are AVERAGES derived from total distance / total elapsed time (robust;
+  instantaneous GPS speed is very noisy). The recording panels Map2.jsx and
+  Map3.jsx now show Distance / Pace / Speed live instead of the fake 7 km/h,
+  and the finish form + the saved activity card show them too.
+
+  NOTE: no schema change was needed. Duration is stored as "HH:MM:SS" in
+  Post.time; pace/speed are recomputed from Post.time + Post.distance wherever
+  they're displayed (parseDuration handles the parsing).
+
+
+================================================================================
+2. ROUTE SNAPSHOT PER ACTIVITY
+================================================================================
+
+  The problem: the finish screen showed a placeholder, no map snapshot.
+
+  IMPORTANT DESIGN CONSTRAINT (why it's a route trace, not map tiles):
+    Capturing the live Leaflet map to an image is unreliable in the browser —
+    OpenStreetMap tiles come from another origin and "taint" an HTML canvas
+    (CORS), so canvas.toDataURL() throws a SecurityError; a proper map-tile
+    snapshot really needs a keyed static-map API (Mapbox/Geoapify/etc.). To
+    keep this working for every user with no API key and no CORS issues, we
+    render the RECORDED GPS PATH itself onto a clean canvas.
+
+  NEW  frontend/src/lib/routeThumbnail.js
+    - renderRouteThumbnail(points) projects the [lat,lng] path (equirectangular,
+      latitude-corrected), fits it to a 640x400 canvas, draws the route line in
+      brand blue with green start / red end dots, and returns a PNG data URL.
+    - < 2 points -> a clean "No route recorded" image (never throws).
+
+  How the points get there:
+    - Map.jsx now accepts a `routeRef` prop and writes the recorded points into
+      it (instead of a private ref).
+    - RecordActivity.jsx owns `routeRef` and passes it to BOTH Map and Form.
+    - Form.jsx generates the snapshot on mount from route, shows it as the
+      activity image, and uploads it as `img` (Cloudinary). The user can still
+      tap "Use a photo instead" to override it.
+
+  BACKEND FIX REQUIRED FOR THIS TO WORK:
+    backend/app.js — express.json()'s default body limit is 100 kb, and a
+    base64 image blows past that (silent 413). Raised json + urlencoded limits
+    to "10mb". Without this, saving an activity WITH an image would have failed.
+
+
+================================================================================
+3. REAL ACTIVITY FEED (home + profile) WITH DETAILS + PRs
+================================================================================
+
+  The activity WAS saving (createPost works), but nothing displayed it — home
+  and profile rendered a hardcoded demo `Post` card. Now they show real data.
+
+  NEW  frontend/src/components/common/ActivityCard.jsx
+    - Data-driven card: author (avatar/name/date), sport icon, title/description,
+      a stat row (Distance / Time / Pace / Speed), the route-snapshot image,
+      kudos count, and a working "give kudos" (like) button.
+    - The like button is hidden on your OWN posts (the API returns 401 for
+      liking your own post) and shows a filled heart when you've kudos'd it.
+    - PR badges (see below) render as amber "🏆 Longest distance / Fastest pace"
+      pills.
+
+  NEW  frontend/src/components/Feed.jsx  (home center column)
+    - Fetches GET /api/post/myactivities (queryKey ["myActivities"]), shows a
+      "Record Activity" button, renders ActivityCards, and falls back to the
+      "Getting Started" card (Middle) when you have no activities yet.
+
+  Personal records — computePRs(activities) in metrics.js:
+    - Flags the single longest-distance activity ("Longest distance") and the
+      single fastest-pace activity ("Fastest pace") in the list. Passed to each
+      card as prLabels. (Richer PRs — fastest 5k, biggest climb — are future
+      work; we don't capture elevation yet.)
+
+  WIRING:
+    - Holder.jsx (home): center column now renders <Feed/> instead of <Middle/>.
+    - ProfilePage.jsx: center column now lists the profile user's REAL
+      activities (GET /api/post/user/:id, queryKey ["userActivities", id]) with
+      PR badges; the right column is now a REAL "Totals" card (activity count,
+      total distance, total time, average pace) instead of the hardcoded Stats
+      comparison table.
+    - Form.jsx invalidates ["myActivities"] on save so the new activity appears
+      immediately when it navigates home.
+
+  Now unused (previously demo, safe to delete): components/common/Post.jsx,
+  components/Stats.jsx (joined the earlier dead list: Profile/Social/OnlyMap).
+
+
+================================================================================
+4. VERIFICATION
+================================================================================
+
+  - Frontend `npm run build` -> success.
+  - Backend `npm test` -> 46 passed (the body-limit change didn't affect them).
+  - End-to-end to check on the phone after redeploy: record a short walk ->
+    Pace/Speed should now be real numbers -> FINISH -> the image box shows your
+    traced route -> Save -> you land on Home and the activity appears in "Your
+    Activities" with Distance/Time/Pace/Speed and any PR badge; it's also on
+    your profile with a real Totals card.
+
+  Files: backend/app.js; frontend/src/lib/{metrics.js,routeThumbnail.js} (new);
+  components/common/ActivityCard.jsx (new); components/Feed.jsx (new);
+  components/Holder.jsx; pages/userprofile/ProfilePage.jsx;
+  pages/activity/{RecordActivity,Map2,Map3,Form}.jsx; components/common/Map.jsx.
+
+------------------------- end of activity-features section ----------------------
+
+
+################################################################################
+#                                                                              #
+#   REAL MAP-TILE ROUTE SNAPSHOT (Mapbox Static Images)  (2026-07-12)          #
+#                                                                              #
+#   Upgrade from the route-trace thumbnail to a snapshot on ACTUAL map tiles   #
+#   with the route drawn over them.                                            #
+#                                                                              #
+################################################################################
+
+WHY NOT JUST SCREENSHOT THE LEAFLET MAP:
+  Capturing the live Leaflet map to a canvas taints it (OSM tiles are
+  cross-origin, no reliable CORS), so canvas.toDataURL() throws. The robust,
+  key-based way to get "tiles + route" as an image is a STATIC MAP API that
+  renders it server-side and returns a plain image (which we can fetch as a
+  blob without any canvas, so there's no tainting).
+
+APPROACH (Mapbox Static Images API, client-side, with Cloudinary persistence):
+  NEW  frontend/src/lib/staticMap.js
+    - encodePolyline(): Google/Mapbox precision-5 polyline encoding of the
+      [lat,lng] route (downsampled to <=100 points to keep the URL short).
+    - mapboxRouteUrl(): builds
+        https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/static/
+          path-5+1177ff(<encoded>),pin-s+22c55e(startLng,startLat),
+          pin-s+ef4444(endLng,endLat)/auto/640x400@2x?padding=40&access_token=...
+      i.e. the route as a blue polyline + green start / red end pins on real
+      outdoors tiles, auto-fit to the route.
+    - renderMapSnapshot(): fetches that URL, reads the response as a BLOB, and
+      converts it to a base64 data URL. No canvas is involved, so there's no
+      CORS tainting; Mapbox sends permissive CORS headers anyway.
+
+  Form.jsx (finish screen):
+    - Shows the instant self-contained route trace first (no empty box), then
+      asynchronously upgrades to the Mapbox map-tile snapshot if it succeeds.
+    - Whatever image is shown is what gets uploaded (base64 -> backend ->
+      Cloudinary), so the persisted activity image is the real map — and the
+      Mapbox token never lands in the database (we store the Cloudinary URL).
+
+  GRACEFUL FALLBACK:
+    - If VITE_MAPBOX_TOKEN is not set, or the fetch fails, renderMapSnapshot
+      returns null and the activity keeps the route-trace thumbnail. The app
+      works with OR without the token.
+
+CONFIG (IMPORTANT — you must set this for real tiles):
+  - Get a free PUBLIC token at https://account.mapbox.com/access-tokens/
+  - Expose it to the frontend build as  VITE_MAPBOX_TOKEN.
+    * Vite only embeds variables prefixed with VITE_, and it does so AT BUILD
+      TIME. Verified locally: building with VITE_MAPBOX_TOKEN=... embeds it into
+      the JS bundle. So on Render, add VITE_MAPBOX_TOKEN as an environment
+      variable and redeploy (the build picks it up).
+  - A public Mapbox token (pk.*) is designed to be used in client code; lock it
+    down with URL restrictions in the Mapbox dashboard. (If you'd rather keep it
+    fully server-side, the alternative is to send the route to the backend and
+    have createPost fetch Mapbox + upload — noted as a future option.)
+
+VERIFICATION:
+  - `npm run build` succeeds; confirmed a dummy VITE_MAPBOX_TOKEN gets embedded
+    into dist. With no token, the clean build falls back to the trace thumbnail.
+  - Files: frontend/src/lib/staticMap.js (new); pages/activity/Form.jsx; plus a
+    README note documenting VITE_MAPBOX_TOKEN.
+
+------------------------- end of map-tile snapshot section ----------------------
+
+
+################################################################################
+#                                                                              #
+#   SWITCHED MAP-TILE SNAPSHOT FROM MAPBOX -> OPENSTREETMAP DIRECT (2026-07-12)#
+#                                                                              #
+#   Mapbox required a credit card (charges past the free tier), so we dropped  #
+#   it entirely and render the snapshot from OpenStreetMap tiles ourselves —   #
+#   no key, no card, no third-party service.                                   #
+#                                                                              #
+################################################################################
+
+KEY FACT THAT MAKES THIS POSSIBLE:
+  `https://tile.openstreetmap.org/{z}/{x}/{y}.png` responds with
+      access-control-allow-origin: *
+  (verified with curl). So if we load the tiles as crossOrigin="anonymous"
+  Images, drawing them onto a <canvas> does NOT taint it, and canvas.toDataURL()
+  works. That's the whole trick — we don't need a keyed static-map API.
+
+NEW  frontend/src/lib/osmSnapshot.js  — renderOsmSnapshot(points):
+  - Slippy-map math (Web Mercator): worldX/worldY convert lat/lng to world
+    pixels at a zoom.
+  - Picks the highest zoom (<=18) at which the whole route fits a 640x400 frame.
+  - Works out every tile intersecting the viewport, loads each from
+    tile.openstreetmap.org as a crossOrigin Image, and draws them at the right
+    offsets (missing tiles just leave the grey background).
+  - Draws the route (blue), start (green) / end (red) dots, and the required
+    "© OpenStreetMap" attribution, then returns canvas.toDataURL("image/png").
+  - Returns null on any failure -> caller falls back to the route-trace thumb.
+
+CHANGED:
+  - pages/activity/Form.jsx now calls renderOsmSnapshot (was renderMapSnapshot).
+    Still shows the instant route-trace first, then upgrades to the OSM map once
+    its tiles load; whatever is shown is uploaded -> Cloudinary.
+  - DELETED frontend/src/lib/staticMap.js (the Mapbox version).
+  - README: removed the VITE_MAPBOX_TOKEN section; snapshots need NO key now.
+
+OSM TILE POLICY NOTE:
+  Generating one snapshot (~9-12 tiles) per saved activity is light, "normal"
+  usage — not bulk downloading — and the image carries OSM attribution, so this
+  is within the OSM tile usage policy for a small app. If usage ever grew large,
+  the polite next step would be a self-hosted tile cache or a paid tile plan.
+
+VERIFICATION:
+  - `npm run build` succeeds; no Mapbox references remain.
+  - No env var / token required. Redeploy and record a walk: the finished
+    activity image should now be your route drawn over real OpenStreetMap tiles.
+
+--------------------- end of osm-direct snapshot section -------------------------

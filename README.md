@@ -134,6 +134,9 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
 
+> Activity **route snapshots** are generated on the client directly from
+> OpenStreetMap tiles — no map API key or token is required.
+
 ---
 
 ## Getting Started
